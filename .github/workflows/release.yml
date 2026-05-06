@@ -1,0 +1,52 @@
+# This GitHub Action automates the process of building, signing, and releasing Grafana plugins.
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Sign plugin
+        run: npm run sign
+        env:
+          GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+
+      - name: Package plugin
+        run: npm run package
+
+      - name: Get plugin metadata
+        id: metadata
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          echo "plugin_id=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+
+      - name: Upload signed plugin to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./vtexio-grafana-plugin-build/vtexio-grafana-plugin-${{ steps.metadata.outputs.version }}.zip
+          asset_name: vtexio-grafana-plugin-${{ steps.metadata.outputs.version }}.zip
+          asset_content_type: application/zip

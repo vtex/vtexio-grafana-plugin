@@ -1,0 +1,37 @@
+- name: vtexio-grafana-plugin
+  acronym: vtexio-grafana-plugin
+  referenceId: ''
+  description: VTEX IO Grafana Datasource
+  build:
+    provider: dkcicd
+    pipelines:
+      - name: techdocs-v1
+        parameters:
+          entityReference: default/component/vtexio-grafana-plugin
+          indexFile: README.md
+          sourceDir: ./
+        when:
+          - event: push
+            source: branch
+            regex: main
+      - name: build-node-app-and-upload-artifacts-v1
+        parameters:
+          awsAccountId: '053131491888'
+          awsBucket: vtex-observability
+          awsRegion: us-east-1
+          build: 'true'
+          buildCommand: 'run build:ci'
+          buildTarget: vtexio-grafana-plugin-build
+          contextPath: ../vtexio-grafana-plugin
+          nodeVersion: 22-bookworm
+          packageManager: npm
+          destinationPath: grafana
+        runtime:
+          architecture:
+            - amd64
+        when:
+          - event: push
+            source: tag
+            regex: ^(v[0-9]+\.[0-9]+\.[0-9]+)-beta\.[0-9]+$
+        notifications:
+          slack: {}
