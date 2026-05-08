@@ -83,10 +83,14 @@ test.describe('QueryEditor - API Interactions', () => {
     // Set visualization to Logs (G13: direct Logs button; G12: Change Visualization combobox then Logs)
     await ensureLogsVisualization(page);
 
-    // Wait and validate if the fixture logs are showing in the panel
-    await expect(page.getByText('Log entry 1')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Log entry 2')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText('Log entry 3')).toBeVisible({ timeout: 10000 });
+    // Wait and validate if the fixture logs are showing in the panel.
+    // Scope to the panel content to avoid strict-mode violation in Grafana 13:
+    // the "Suggested Visualizations" sidebar (Logs/Table thumbnails) also renders
+    // the same text, causing getByText() to match multiple elements.
+    const panelContent = page.getByTestId('data-testid panel content');
+    await expect(panelContent.getByText('Log entry 1')).toBeVisible({ timeout: 10000 });
+    await expect(panelContent.getByText('Log entry 2')).toBeVisible({ timeout: 10000 });
+    await expect(panelContent.getByText('Log entry 3')).toBeVisible({ timeout: 10000 });
   });
 });
 
