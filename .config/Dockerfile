@@ -46,7 +46,9 @@ COPY supervisord/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 
 # Install ClickHouse plugin
-RUN grafana-cli plugins install grafana-clickhouse-datasource
+# Note: use the absolute path because /usr/share/grafana/bin is not in PATH
+# during `docker build` (running as root), which causes `exit code: 127`.
+RUN /usr/share/grafana/bin/grafana cli plugins install grafana-clickhouse-datasource
 
 # Inject livereload script into grafana index.html
 RUN sed -i 's|</body>|<script src="http://localhost:35729/livereload.js"></script></body>|g' /usr/share/grafana/public/views/index.html
