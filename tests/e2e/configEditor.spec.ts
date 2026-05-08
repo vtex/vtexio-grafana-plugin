@@ -100,8 +100,10 @@ test.describe('ConfigEditor - Save Functionality', () => {
     await page.getByLabel('App Key').fill('vtexappkey-teststore-validkey123');
     await page.getByLabel('App Token').fill('valid-token-value');
     
-    // Save button should be visible and clickable
-    const saveButton = page.getByRole('button', { name: 'Save & test' });
+    // Save button should be visible and clickable.
+    // Use the stable data-testid (works across Grafana 10/11/12/13).
+    // The accessible name flipped from "Save & test" to "Save and test" in Grafana 13.
+    const saveButton = page.getByTestId('data-testid Data source settings page Save and Test button');
     await expect(saveButton).toBeVisible();
     await expect(saveButton).toBeEnabled();
   });
@@ -133,8 +135,9 @@ test.describe('ConfigEditor - API Connection Testing', () => {
     await page.getByLabel('App Key').fill('vtexappkey-test-valid');
     await page.getByLabel('App Token').fill('valid-token');
     
-    // Click Save & test button - this will save the config and then test the connection
-    await page.getByRole('button', { name: 'Save & test' }).click();
+    // Click Save & test button - this will save the config and then test the connection.
+    // Use the stable data-testid (works across Grafana 10/11/12/13).
+    await page.getByTestId('data-testid Data source settings page Save and Test button').click();
     
     // Wait for success message - the testDatasource() method should succeed
     // The mock should intercept the FetchLogsFields() call and return 200
@@ -162,8 +165,9 @@ test.describe('ConfigEditor - API Connection Testing', () => {
     await page.getByLabel('App Key').fill('vtexappkey-test-invalid');
     await page.getByLabel('App Token').fill('invalid-token');
     
-    // Click Save & test button
-    await page.getByRole('button', { name: 'Save & test' }).click();
+    // Click Save & test button.
+    // Use the stable data-testid (works across Grafana 10/11/12/13).
+    await page.getByTestId('data-testid Data source settings page Save and Test button').click();
     
     // Wait for error message
     await expect(page.getByText(/failed|error|unauthorized/i)).toBeVisible({ timeout: 10000 });
