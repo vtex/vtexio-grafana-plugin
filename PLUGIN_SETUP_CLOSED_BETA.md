@@ -15,7 +15,7 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
 ## Overview
 
 - **Plugin Name:** VTEX IO
-- **Plugin ID:** `vtexio-grafana-plugin`
+- **Plugin ID:** `vtexio-grafana-datasource`
 - **Type:** Datasource
 - **Version:** 0.2.0-beta.0
 - **Download Link:** VTEX IO Grafana Datasource Zip
@@ -33,7 +33,7 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
    - **Docker:** `/var/lib/grafana/plugins`
 3. Extract the zip file into this directory.
 
-> **Important:** Ensure the folder is named `vtexio-grafana-plugin`.
+> **Important:** Ensure the folder is named `vtexio-grafana-datasource`.
 >
 > **Verification:** A `plugin.json` file must exist at the root of this folder.
 
@@ -47,10 +47,10 @@ Grafana blocks unsigned plugins by default; you must authorize it in your config
 
 ```ini
 [plugins]
-allow_loading_unsigned_plugins = vtexio-grafana-plugin
+allow_loading_unsigned_plugins = vtexio-grafana-datasource
 ```
 
-For Docker: Add the environment variable `-e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-plugin"` to your command or `docker-compose.yml`.
+For Docker: Add the environment variable `-e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource"` to your command or `docker-compose.yml`.
 
 ### Step 3: Restart Grafana
 
@@ -71,7 +71,7 @@ For Docker environments, installation is managed via volume mounting and environ
 
 ### Step 1: Extract Plugin Locally
 
-Unzip the plugin on your host machine. Ensure the structure is `vtexio-grafana-plugin/plugin.json`.
+Unzip the plugin on your host machine. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
 
 ### Step 2: Run/Compose Example
 
@@ -81,8 +81,8 @@ Unzip the plugin on your host machine. Ensure the structure is `vtexio-grafana-p
 docker run -d \
   --name grafana \
   -p 3000:3000 \
-  -v $(pwd)/vtexio-grafana-plugin:/var/lib/grafana/plugins/vtexio-grafana-plugin \
-  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-plugin \
+  -v $(pwd)/vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource \
+  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource \
   grafana/grafana:latest
 ```
 
@@ -97,9 +97,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./vtexio-grafana-plugin:/var/lib/grafana/plugins/vtexio-grafana-plugin
+      - ./vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource
     environment:
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-plugin
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource
 ```
 
 ## Configuration & Credentials

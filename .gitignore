@@ -33,7 +33,7 @@ artifacts/
 work/
 ci/
 vtexio-grafana-plugin-build/
-vtexio-grafana-plugin/
+vtexio-grafana-datasource/
 
 # e2e test directories
 /test-results/

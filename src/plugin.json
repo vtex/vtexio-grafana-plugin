@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "VTEX IO",
-  "id": "vtexio-grafana-plugin",
+  "id": "vtexio-grafana-datasource",
   "metrics": true,
   "logs": true,
   "multiValueFilterOperators": true,

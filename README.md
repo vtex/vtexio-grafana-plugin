@@ -81,15 +81,3 @@ If you need to rollback to the previous version:
 2. Restart Grafana
 3. Note: Dashboards using the new format will need manual reversion
 
-### Plugin ID renamed (vtexio-grafana-datasource → vtexio-grafana-plugin)
-
-The plugin id changed from `vtexio-grafana-datasource` to `vtexio-grafana-plugin`. Existing closed-beta installations continue to work under the old id but will not receive further updates; new releases ship under the new id from this repository.
-
-If you are upgrading from a previous release that used the old id, take the following manual steps after downloading the new build:
-
-1. **Replace the plugin folder** under `/var/lib/grafana/plugins/`. Remove the old `vtexio-grafana-datasource/` folder and install the new `vtexio-grafana-plugin/` folder from the release zip.
-2. **Recreate the datasource** in the Grafana UI. Datasources previously configured with `type: 'vtexio-grafana-datasource'` will no longer resolve, so add a new datasource of type `vtexio-grafana-plugin` and copy over the App Key / App Token fields.
-3. **Re-import the updated dashboards** from the new zip so panels and variables reference the new datasource id.
-
-Download the new release from <https://github.com/vtex/vtexio-grafana-plugin/releases>.
-

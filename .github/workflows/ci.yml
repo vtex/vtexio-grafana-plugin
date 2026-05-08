@@ -236,9 +236,9 @@ jobs:
         run: |
           echo "Checking if plugin is loaded in Grafana..."
           # Check container logs for plugin loading
-          docker logs vtexio-grafana-plugin 2>&1 | grep -i "vtexio-grafana-plugin" || echo "Plugin mention not found in logs"
+          docker logs vtexio-grafana-plugin 2>&1 | grep -i "vtexio-grafana-datasource" || echo "Plugin mention not found in logs"
           # Check if plugin files are accessible in container
-          docker exec vtexio-grafana-plugin ls -la /var/lib/grafana/plugins/vtexio-grafana-plugin/ || echo "Plugin directory not accessible"
+          docker exec vtexio-grafana-plugin ls -la /var/lib/grafana/plugins/vtexio-grafana-datasource/ || echo "Plugin directory not accessible"
           # Verify environment variable
           docker exec vtexio-grafana-plugin printenv | grep GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS || echo "Unsigned plugins env not set"
 

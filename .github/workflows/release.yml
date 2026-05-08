@@ -39,7 +39,7 @@ jobs:
         id: metadata
         run: |
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-          echo "plugin_id=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "plugin_id=$(node -p "require('./dist/plugin.json').id")" >> $GITHUB_OUTPUT
 
       - name: Upload signed plugin to release
         uses: actions/upload-release-asset@v1
