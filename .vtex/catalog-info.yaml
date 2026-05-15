@@ -5,7 +5,7 @@ metadata:
   annotations:
     github.com/project-slug: vtex/vtexio-grafana-plugin
     backstage.io/techdocs-ref: dir:../
-    vtex.com/application-id: ''
+    vtex.com/application-id: GQGCP62P
     vtex.com/platform-flow-id: VTEXEng#1,CommDev#3
 spec:
   type: other
