@@ -1,0 +1,284 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+  pages: write
+
+jobs:
+  build:
+    name: Build, lint and unit tests
+    runs-on: ubuntu-latest
+    outputs:
+      plugin-id: ${{ steps.metadata.outputs.plugin-id }}
+      plugin-version: ${{ steps.metadata.outputs.plugin-version }}
+      has-e2e: ${{ steps.check-for-e2e.outputs.has-e2e }}
+      has-backend: ${{ steps.check-for-backend.outputs.has-backend }}
+    env:
+      GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Check types
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run test:ci
+      - name: Build frontend
+        run: |
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            npm run build -- --profile --json stats.json
+          else
+            npm run build
+          fi
+
+      - name: Check for backend
+        id: check-for-backend
+        run: |
+          if [ -f "Magefile.go" ]
+          then
+            echo "has-backend=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Go environment
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Test backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v3
+        with:
+          version: latest
+          args: coverage
+
+      - name: Build backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v3
+        with:
+          version: latest
+          args: buildAll
+
+      - name: Check for E2E
+        id: check-for-e2e
+        run: |
+          if [ -f "playwright.config.ts" ]
+          then
+            echo "has-e2e=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sign plugin
+        run: npm run sign
+        if: ${{ env.GRAFANA_ACCESS_POLICY_TOKEN != '' }}
+
+      - name: Get plugin metadata
+        id: metadata
+        run: |
+          sudo apt-get install jq
+
+          export GRAFANA_PLUGIN_ID=$(cat dist/plugin.json | jq -r .id)
+          export GRAFANA_PLUGIN_VERSION=$(cat dist/plugin.json | jq -r .info.version)
+          export GRAFANA_PLUGIN_ARTIFACT=${GRAFANA_PLUGIN_ID}-${GRAFANA_PLUGIN_VERSION}.zip
+
+          echo "plugin-id=${GRAFANA_PLUGIN_ID}" >> $GITHUB_OUTPUT
+          echo "plugin-version=${GRAFANA_PLUGIN_VERSION}" >> $GITHUB_OUTPUT
+          echo "archive=${GRAFANA_PLUGIN_ARTIFACT}" >> $GITHUB_OUTPUT
+
+      - name: Package plugin
+        id: package-plugin
+        run: |
+          mv dist ${{ steps.metadata.outputs.plugin-id }}
+          zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
+
+      - name: Check plugin.json
+        run: |
+          docker run --pull=always \
+            -v $PWD/${{ steps.metadata.outputs.archive }}:/archive.zip \
+            grafana/plugin-validator-cli -analyzer=metadatavalid /archive.zip
+
+      - name: Archive Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.plugin-id }}-${{ steps.metadata.outputs.plugin-version }}
+          path: ${{ steps.metadata.outputs.plugin-id }}
+          retention-days: 5
+
+      - name: Upload stats.json artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-branch-stats
+          path: stats.json
+          overwrite: true
+
+  resolve-versions:
+    name: Resolve e2e images
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: build
+    if: ${{ needs.build.outputs.has-e2e == 'true' }}
+    outputs:
+      matrix: ${{ steps.resolve-versions.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Resolve Grafana E2E versions
+        id: resolve-versions
+        uses: grafana/plugin-actions/e2e-version@main
+        with:
+          # Only test latest version on PRs, test all versions on main
+          version-resolver-type: ${{ github.event_name == 'pull_request' && 'version-support-policy' || 'version-support-policy' }}
+
+  playwright-tests:
+    needs: [resolve-versions, build]
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        GRAFANA_IMAGE: ${{fromJson(needs.resolve-versions.outputs.matrix)}}
+    name: e2e test ${{ matrix.GRAFANA_IMAGE.name }}@${{ matrix.GRAFANA_IMAGE.VERSION }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download plugin
+        uses: actions/download-artifact@v4
+        with:
+          path: .artifact-download
+          name: ${{ needs.build.outputs.plugin-id }}-${{ needs.build.outputs.plugin-version }}
+
+      - name: Move plugin to dist directory
+        run: |
+          mkdir -p dist
+          # Move contents from artifact to dist, flattening the directory structure
+          mv .artifact-download/* dist/
+          rm -rf .artifact-download
+          ls -la dist/
+
+      - name: Execute permissions on binary
+        if: needs.build.outputs.has-backend == 'true'
+        run: |
+          chmod +x ./dist/gpx_*
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dev dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npm exec playwright install chromium --with-deps
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npm exec playwright install-deps chromium
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify plugin structure
+        run: |
+          echo "Checking dist directory structure..."
+          ls -la dist/
+          if [ ! -f "dist/plugin.json" ]; then
+            echo "ERROR: plugin.json not found in dist/"
+            exit 1
+          fi
+          echo "plugin.json found, checking contents..."
+          cat dist/plugin.json | grep -E '"id"|"name"|"type"' || true
+
+      - name: Start Grafana
+        run: |
+          docker compose pull
+          ANONYMOUS_AUTH_ENABLED=false DEVELOPMENT=false GRAFANA_VERSION=${{ matrix.GRAFANA_IMAGE.VERSION }} GRAFANA_IMAGE=${{ matrix.GRAFANA_IMAGE.NAME }} docker compose up -d
+
+      - name: Wait for grafana server
+        uses: grafana/plugin-actions/wait-for-grafana@main
+        with:
+          url: http://localhost:3000/login
+
+      - name: Verify plugin loaded in Grafana
+        run: |
+          echo "Checking if plugin is loaded in Grafana..."
+          # Check container logs for plugin loading
+          docker logs vtexio-grafana-plugin 2>&1 | grep -i "vtexio-grafana-datasource" || echo "Plugin mention not found in logs"
+          # Check if plugin files are accessible in container
+          docker exec vtexio-grafana-plugin ls -la /var/lib/grafana/plugins/vtexio-grafana-datasource/ || echo "Plugin directory not accessible"
+          # Verify environment variable
+          docker exec vtexio-grafana-plugin printenv | grep GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS || echo "Unsigned plugins env not set"
+
+      - name: Run Playwright tests
+        id: run-tests
+        run: npm run e2e
+
+      - name: Upload e2e test summary
+        uses: grafana/plugin-actions/playwright-gh-pages/upload-report-artifacts@main
+        if: ${{ always() && !cancelled() }}
+        with:
+          upload-report: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-outcome: ${{ steps.run-tests.outcome }}
+
+      - name: Docker logs
+        if: ${{ always() && steps.run-tests.outcome == 'failure' }}
+        run: |
+          docker logs vtexio-grafana-plugin >& grafana-server.log
+      
+      - name: Upload Docker logs
+        if: ${{ always() && steps.run-tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: grafana-logs-${{ matrix.GRAFANA_IMAGE.NAME }}-${{ matrix.GRAFANA_IMAGE.VERSION }}
+          path: grafana-server.log
+          retention-days: 2
+
+      - name: Stop grafana docker
+        run: docker compose down
+
+  # Publishes Playwright test reports to GitHub Pages
+  # Reports will be available at: https://<username>.github.io/<repository>/
+  publish-report:
+    if: ${{ always() && !cancelled() }}
+    needs: [playwright-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish report
+        uses: grafana/plugin-actions/playwright-gh-pages/deploy-report-pages@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

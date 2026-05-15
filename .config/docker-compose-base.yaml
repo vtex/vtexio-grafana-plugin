@@ -1,0 +1,33 @@
+services:
+  grafana:
+    user: root
+    container_name: 'vtexio-grafana-plugin'
+
+    build:
+      context: .
+      args:
+        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
+        grafana_version: ${GRAFANA_VERSION:-11.5.3}
+        development: ${DEVELOPMENT:-false}
+        anonymous_auth_enabled: ${ANONYMOUS_AUTH_ENABLED:-true}
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - ../dist:/var/lib/grafana/plugins/vtexio-grafana-datasource
+      - ../provisioning:/etc/grafana/provisioning
+      # Mount only essential files to avoid plugin pollution in the repository
+      - ../src:/root/vtexio-grafana-plugin/src:ro
+      - ../package.json:/root/vtexio-grafana-plugin/package.json:ro
+      - ../tsconfig.json:/root/vtexio-grafana-plugin/tsconfig.json:ro
+      - ../.config:/root/vtexio-grafana-plugin/.config:ro
+
+    environment:
+      NODE_ENV: development
+      GF_LOG_FILTERS: plugin.vtexio-grafana-datasource:info
+      GF_LOG_LEVEL: info
+      GF_DATAPROXY_LOGGING: 0
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: vtexio-grafana-datasource
+      GF_SERVER_ROOT_URL: http://localhost:3000/
+      # Increase query timeouts for ClickHouse
+      GF_DATAPROXY_TIMEOUT: 30
+      GF_DATASOURCE_QUERY_TIMEOUT: 30s

@@ -4,8 +4,12 @@ metadata:
   name: vtexio-grafana-plugin
   annotations:
     github.com/project-slug: vtex/vtexio-grafana-plugin
-    vtex.com/platform-flow-id: CommDev#3,VTEXEng#1
+    backstage.io/techdocs-ref: dir:../
+    vtex.com/application-id: GQGCP62P
+    vtex.com/platform-flow-id: VTEXEng#1,CommDev#3
+    vtex.com/sdd-check-skip: 'true'
+    vtex.com/sdd-check-skip-reason: Public repo
 spec:
   type: other
-  lifecycle: unknown
+  lifecycle: experimental
   owner: te-0029
