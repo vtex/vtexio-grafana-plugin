@@ -4,6 +4,7 @@ metadata:
   name: vtexio-grafana-plugin
   annotations:
     github.com/project-slug: vtex/vtexio-grafana-plugin
+    vtex.com/platform-flow-id: CommDev#3,VTEXEng#1
 spec:
   type: other
   lifecycle: unknown
