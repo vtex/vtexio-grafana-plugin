@@ -1,6 +1,6 @@
 {
   "name": "vtexio-grafana-plugin",
-  "version": "0.2.0-beta.0",
+  "version": "0.2.1-beta.0",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
