@@ -1,6 +1,6 @@
 - name: vtexio-grafana-plugin
   acronym: vtexio-grafana-plugin
-  referenceId: ''
+  referenceId: GQGCP62P
   description: VTEX IO Grafana Datasource
   build:
     provider: dkcicd
