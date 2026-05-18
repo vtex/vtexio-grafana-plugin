@@ -1,10 +1,10 @@
 {
   "name": "vtexio-grafana-plugin",
-  "version": "0.2.1-beta.0",
+  "version": "0.2.1-beta.1",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
-    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-plugin-$npm_package_version.zip vtexio-grafana-datasource && rm -rf vtexio-grafana-datasource",
+    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource-$npm_package_version && rm -rf vtexio-grafana-datasource-$npm_package_version",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
