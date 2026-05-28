@@ -85,6 +85,66 @@ test.describe('ConfigEditor - Password Field Behavior', () => {
   });
 });
 
+test.describe('ConfigEditor - Account Field', () => {
+  test('should render Account field', async ({
+    createDataSourceConfigPage,
+    readProvisionedDataSource,
+    page,
+  }) => {
+    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    await createDataSourceConfigPage({ type: ds.type });
+
+    await expect(page.getByLabel('App Key')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#config-editor-account')).toBeVisible();
+  });
+
+  test('should auto-fill Account from App Key when pattern matches', async ({
+    createDataSourceConfigPage,
+    readProvisionedDataSource,
+    page,
+  }) => {
+    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    await createDataSourceConfigPage({ type: ds.type });
+
+    await expect(page.getByLabel('App Key')).toBeVisible({ timeout: 10000 });
+
+    await page.getByLabel('App Key').fill('vtexappkey-mystore-ABC123');
+    await expect(page.locator('#config-editor-account')).toHaveValue('mystore');
+  });
+
+  test('should allow manual override of Account field', async ({
+    createDataSourceConfigPage,
+    readProvisionedDataSource,
+    page,
+  }) => {
+    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    await createDataSourceConfigPage({ type: ds.type });
+
+    await expect(page.getByLabel('App Key')).toBeVisible({ timeout: 10000 });
+
+    await page.getByLabel('App Key').fill('vtexappkey-mystore-ABC123');
+    await expect(page.locator('#config-editor-account')).toHaveValue('mystore');
+
+    await page.locator('#config-editor-account').fill('vtex');
+    await expect(page.locator('#config-editor-account')).toHaveValue('vtex');
+  });
+
+  test('should not overwrite manually set Account when App Key changes to non-matching value', async ({
+    createDataSourceConfigPage,
+    readProvisionedDataSource,
+    page,
+  }) => {
+    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    await createDataSourceConfigPage({ type: ds.type });
+
+    await expect(page.getByLabel('App Key')).toBeVisible({ timeout: 10000 });
+
+    await page.locator('#config-editor-account').fill('vtex');
+    await page.getByLabel('App Key').fill('notamatchingkey');
+    await expect(page.locator('#config-editor-account')).toHaveValue('vtex');
+  });
+});
+
 test.describe('ConfigEditor - Save Functionality', () => {
   test('should enable saving with valid credentials', async ({ 
     createDataSourceConfigPage, 
