@@ -138,6 +138,8 @@ jobs:
     timeout-minutes: 3
     needs: build
     if: ${{ needs.build.outputs.has-e2e == 'true' }}
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     outputs:
       matrix: ${{ steps.resolve-versions.outputs.matrix }}
     steps:
