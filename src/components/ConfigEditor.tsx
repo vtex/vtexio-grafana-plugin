@@ -28,7 +28,17 @@ export function ConfigEditor(props: Props) {
       jsonData: {
         ...options.jsonData,
         appKey: value,
-        ...(extractedTenant ? { tenant: extractedTenant } : { tenant: '' }),
+        ...(extractedTenant ? { tenant: extractedTenant } : {}),
+      },
+    });
+  };
+
+  const onAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        tenant: event.target.value,
       },
     });
   };
@@ -63,6 +73,21 @@ export function ConfigEditor(props: Props) {
             placeholder="Enter your app key, e.g. vtexappkey-mystore-ABCD1234"
             width={72}
             required
+          />
+        </InlineField>
+        <InlineField
+          label="Account"
+          labelWidth={14}
+          interactive
+          tooltip={'VTEX account to query. Auto-filled from App Key; override here for cross-account access.'}
+        >
+          <Input
+            id="config-editor-account"
+            aria-label="Account"
+            onChange={onAccountChange}
+            value={jsonData.tenant || ''}
+            placeholder="e.g. mystore"
+            width={72}
           />
         </InlineField>
         <InlineField
