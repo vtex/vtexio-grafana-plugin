@@ -35,18 +35,17 @@ jobs:
       - name: Package plugin
         run: npm run package
 
-      - name: Get plugin metadata
-        id: metadata
+      - name: Locate built artifact
+        id: artifact
         run: |
-          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-          echo "plugin_id=$(node -p "require('./dist/plugin.json').id")" >> $GITHUB_OUTPUT
+          file=$(ls vtexio-grafana-plugin-build/*.zip | head -n1)
+          if [ -z "$file" ]; then
+            echo "No .zip found in vtexio-grafana-plugin-build/"; exit 1
+          fi
+          echo "path=$file" >> $GITHUB_OUTPUT
+          echo "name=$(basename "$file")" >> $GITHUB_OUTPUT
 
       - name: Upload signed plugin to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./vtexio-grafana-plugin-build/vtexio-grafana-datasource-${{ steps.metadata.outputs.version }}.zip
-          asset_name: vtexio-grafana-datasource-${{ steps.metadata.outputs.version }}.zip
-          asset_content_type: application/zip
+          files: ${{ steps.artifact.outputs.path }}
