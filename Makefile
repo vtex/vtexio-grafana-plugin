@@ -66,7 +66,7 @@ push-tag: ## Push the current branch commit and its version tag to origin
 download-zip: ## Download the release .zip for the current version (TAG=vX.Y.Z to override)
 	@version=$$($(GET_VERSION)); \
 	tag="v$$version"; \
-	zip="vtexio-grafana-plugin-$$version.zip"; \
+	zip="vtexio-grafana-datasource-$$version.zip"; \
 	if command -v gh >/dev/null 2>&1; then \
 		echo "Downloading $$zip via gh CLI..."; \
 		if gh release download "$$tag" \
@@ -77,12 +77,12 @@ download-zip: ## Download the release .zip for the current version (TAG=vX.Y.Z t
 			echo "Saved $$zip"; \
 		else \
 			echo "gh release download failed, falling back to git archive..."; \
-			git archive --format=zip --prefix="vtexio-grafana-plugin-$$version/" -o "$$zip" "$$tag" && \
+			git archive --format=zip --prefix="vtexio-grafana-datasource-$$version/" -o "$$zip" "$$tag" && \
 			echo "Saved $$zip (from git archive)"; \
 		fi; \
 	else \
 		echo "gh CLI not found, falling back to git archive..."; \
-		git archive --format=zip --prefix="vtexio-grafana-plugin-$$version/" -o "$$zip" "$$tag" && \
+		git archive --format=zip --prefix="vtexio-grafana-datasource-$$version/" -o "$$zip" "$$tag" && \
 		echo "Saved $$zip (from git archive)"; \
 	fi
 
