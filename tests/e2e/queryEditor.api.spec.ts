@@ -1,15 +1,15 @@
 import { test, expect } from '@grafana/plugin-e2e';
 import { setupApiMocks } from './fixtures/apiMocks';
 import { createAppsResponse, createLogsResponse, createMetricsResponse } from './fixtures/mockData';
-import { ensureLogsVisualization } from './fixtures/testHelpers';
+import { ensureLogsVisualization, selectComboboxOption, selectDatasource } from './fixtures/testHelpers';
 
 test.describe('QueryEditor - API Interactions', () => {
-  test('should load apps list when datasource is selected', async ({ 
-    panelEditPage, 
+  test('should load apps list when datasource is selected', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    // Setup API mocks BEFORE accessing panelEditPage (which navigates)
+    // Register API mocks before adding the panel; QueryEditor fetches apps on mount.
     const mockApps = createAppsResponse({
       logsApps: ['app-1', 'app-2', 'app-3'],
       metricsApps: ['app-1', 'app-2'],
@@ -19,9 +19,9 @@ test.describe('QueryEditor - API Interactions', () => {
       apps: mockApps,
     });
 
-    // Now navigate - panelEditPage will navigate when accessed
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    await panelEditPage.datasource.set('VTEX IO');
+    await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    const panelEditPage = await dashboardPage.addPanel();
+    await selectDatasource(panelEditPage, page, 'VTEX IO');
 
     // Wait for query editor to load
     await expect(
@@ -34,10 +34,10 @@ test.describe('QueryEditor - API Interactions', () => {
     ).toBeVisible();
   });
 
-  test('should execute logs query successfully and display data', async ({ 
-    panelEditPage, 
+  test('should execute logs query successfully and display data', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
     // 1. Setup API mocks FIRST (before any navigation)
     const mockApps = createAppsResponse({
@@ -59,26 +59,20 @@ test.describe('QueryEditor - API Interactions', () => {
     });
 
     // 2. Read datasource config
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    
+    await readProvisionedDataSource({ fileName: 'datasources.yml' });
+
     // 3. Now navigate and interact
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await dashboardPage.addPanel();
+    await selectDatasource(panelEditPage, page, 'VTEX IO');
 
     // 4. Wait for query editor to load with explicit timeout
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
     ).toBeVisible({ timeout: 15000 });
-    
+
     // Wait for app dropdown to be visible
     const appNameCombobox = page.getByRole('combobox', { name: 'App name' });
-    await expect(appNameCombobox).toBeVisible({ timeout: 10000 });
-    await appNameCombobox.click();
-
-    // Wait for dropdown options (listbox/option) then select test-app
-    const testAppOption = page.getByRole('option', { name: 'test-app' }).or(page.getByText('test-app', { exact: true }));
-    await expect(testAppOption.first()).toBeVisible({ timeout: 10000 });
-    await testAppOption.first().click();
-    await expect(appNameCombobox).toHaveValue('test-app');
+    await selectComboboxOption(page, appNameCombobox, 'test-app');
 
     // Set visualization to Logs (G13: direct Logs button; G12: Change Visualization combobox then Logs)
     await ensureLogsVisualization(page);
@@ -95,10 +89,10 @@ test.describe('QueryEditor - API Interactions', () => {
 });
 
 test.describe('QueryEditor - API Error Handling', () => {
-  test('should handle logs query error (500)', async ({ 
-    panelEditPage, 
+  test('should handle logs query error (500)', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
     // Setup API mocks with error - include test-app-1 in the apps list
     await setupApiMocks(page, {
@@ -111,8 +105,9 @@ test.describe('QueryEditor - API Error Handling', () => {
       ],
     });
 
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    await panelEditPage.datasource.set('VTEX IO');
+    await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    const panelEditPage = await dashboardPage.addPanel();
+    await selectDatasource(panelEditPage, page, 'VTEX IO');
 
     // Wait for query editor to load
     await expect(
@@ -121,26 +116,17 @@ test.describe('QueryEditor - API Error Handling', () => {
 
     // Wait for app dropdown to be visible
     const appNameCombobox = page.getByRole('combobox', { name: 'App name' });
-    await expect(appNameCombobox).toBeVisible({ timeout: 10000 });
-    
-    // Wait for apps to load, then open the dropdown and wait for the option to appear
-    await appNameCombobox.click();
-    
-    // Wait for 'test-app-1' option to appear in the dropdown
-    const testAppOption = page.getByRole('option', { name: 'test-app-1' }).or(page.getByText('test-app-1', { exact: true }));
-    await expect(testAppOption.first()).toBeVisible({ timeout: 10000 });
-    await testAppOption.first().click();
-    await expect(appNameCombobox).toHaveValue('test-app-1');
+    await selectComboboxOption(page, appNameCombobox, 'test-app-1');
 
     // Validate the error message to contain the word 'Internal Server Error'
     // Use the Alert component to be more specific and avoid strict mode violation
     await expect(page.getByTestId('data-testid Alert error').getByText(/Internal Server Error/i)).toBeVisible({ timeout: 10000 });
   });
 
-  test('should handle metrics query error (401)', async ({ 
-    panelEditPage, 
+  test('should handle metrics query error (401)', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
     // Setup API mocks with authentication error - include test-app-1 in the apps list
     await setupApiMocks(page, {
@@ -153,8 +139,9 @@ test.describe('QueryEditor - API Error Handling', () => {
       ],
     });
 
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    await panelEditPage.datasource.set('VTEX IO');
+    await readProvisionedDataSource({ fileName: 'datasources.yml' });
+    const panelEditPage = await dashboardPage.addPanel();
+    await selectDatasource(panelEditPage, page, 'VTEX IO');
 
     // Wait for query editor to load
     await expect(
@@ -169,16 +156,7 @@ test.describe('QueryEditor - API Error Handling', () => {
 
     // Wait for app dropdown to be visible
     const appNameCombobox = page.getByRole('combobox', { name: 'App name' });
-    await expect(appNameCombobox).toBeVisible({ timeout: 10000 });
-    
-    // Wait for apps to load, then open the dropdown and wait for the option to appear
-    await appNameCombobox.click();
-    
-    // Wait for 'test-app-1' option to appear in the dropdown
-    const testAppOption = page.getByRole('option', { name: 'test-app-1' }).or(page.getByText('test-app-1', { exact: true }));
-    await expect(testAppOption.first()).toBeVisible({ timeout: 10000 });
-    await testAppOption.first().click();
-    await expect(appNameCombobox).toHaveValue('test-app-1');
+    await selectComboboxOption(page, appNameCombobox, 'test-app-1');
 
     // Select the Request Rate per Account option
     const metricsTypeCombobox = page.getByRole('combobox', { name: 'Metric Type' });
@@ -191,5 +169,3 @@ test.describe('QueryEditor - API Error Handling', () => {
     await expect(page.getByTestId('data-testid Alert error').getByText(/Unauthorized/i)).toBeVisible({ timeout: 10000 });
   });
 });
-
-
