@@ -1,16 +1,31 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type PanelEditPage } from '@grafana/plugin-e2e';
+import type { Page } from '@playwright/test';
 import { setupApiMocks } from './fixtures/apiMocks';
 import { createAppsResponse } from './fixtures/mockData';
-import { selectDatasource } from './fixtures/testHelpers';
+import { selectComboboxOption, selectDatasource } from './fixtures/testHelpers';
+
+async function openQueryEditor(
+  page: Page,
+  dashboardPage: DashboardPage,
+  readProvisionedDataSource: (args: { fileName: string }) => Promise<unknown>,
+  apps = createAppsResponse()
+): Promise<PanelEditPage> {
+  await setupApiMocks(page, { apps });
+  await readProvisionedDataSource({ fileName: 'datasources.yml' });
+
+  const panelEditPage = await dashboardPage.addPanel();
+  await selectDatasource(panelEditPage, page, 'VTEX IO');
+
+  return panelEditPage;
+}
 
 test.describe('QueryEditor - Basic Rendering', () => {
-  test('should render query editor with default fields', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should render query editor with default fields', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     // Wait for query editor to load
     await expect(
@@ -23,13 +38,12 @@ test.describe('QueryEditor - Basic Rendering', () => {
     ).toBeVisible();
   });
 
-  test('should show default query type as logs', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should show default query type as logs', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
@@ -43,14 +57,12 @@ test.describe('QueryEditor - Basic Rendering', () => {
 });
 
 test.describe('QueryEditor - Query Type Selection', () => {
-  test('should allow switching to metrics query type', async ({ 
-    panelEditPage, 
+  test('should allow switching to metrics query type', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
     await expect(queryTypeCombobox).toBeVisible({ timeout: 10000 });
@@ -63,14 +75,12 @@ test.describe('QueryEditor - Query Type Selection', () => {
     await expect(queryTypeCombobox).toHaveValue('Metrics');
   });
 
-  test('should show app name field after selecting logs query type', async ({ 
-    panelEditPage, 
+  test('should show app name field after selecting logs query type', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
@@ -84,14 +94,12 @@ test.describe('QueryEditor - Query Type Selection', () => {
 });
 
 test.describe('QueryEditor - Conditional Field Display', () => {
-  test('should show predefined metric type field only for metrics query type', async ({ 
-    panelEditPage, 
+  test('should show predefined metric type field only for metrics query type', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
     await expect(queryTypeCombobox).toBeVisible({ timeout: 10000 });
@@ -110,13 +118,12 @@ test.describe('QueryEditor - Conditional Field Display', () => {
     await expect(queryTypeCombobox).toHaveValue('Metrics');
   });
 
-  test('should not show predefined metric type field for logs query type', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should not show predefined metric type field for logs query type', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
@@ -130,13 +137,12 @@ test.describe('QueryEditor - Conditional Field Display', () => {
 });
 
 test.describe('QueryEditor - Page Size Input', () => {
-  test('should allow changing page size', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should allow changing page size', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     // Wait for query editor to load first
     await expect(
@@ -149,17 +155,16 @@ test.describe('QueryEditor - Page Size Input', () => {
     // Change page size
     await pageSizeInput.clear();
     await pageSizeInput.fill('50');
-    
+
     await expect(pageSizeInput).toHaveValue('50');
   });
 
-  test('should accept valid page size values', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should accept valid page size values', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     // Wait for query editor to load first
     await expect(
@@ -181,22 +186,20 @@ test.describe('QueryEditor - Page Size Input', () => {
 });
 
 test.describe('QueryEditor - Field Dependencies', () => {
-  test('should show app name dropdown with placeholder', async ({ 
-    panelEditPage, 
+  test('should show app name dropdown with placeholder', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    // Setup API mocks for app loading
-    await setupApiMocks(page, {
-      apps: createAppsResponse({
+    const panelEditPage = await openQueryEditor(
+      page,
+      dashboardPage,
+      readProvisionedDataSource,
+      createAppsResponse({
         logsApps: ['test-app-1', 'test-app-2'],
         metricsApps: ['test-app-1'],
-      }),
-    });
-
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+      })
+    );
 
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
@@ -210,13 +213,12 @@ test.describe('QueryEditor - Field Dependencies', () => {
 });
 
 test.describe('QueryEditor - Accessibility', () => {
-  test('should have proper aria labels for all inputs', async ({ 
-    panelEditPage, 
-    readProvisionedDataSource 
+  test('should have proper aria labels for all inputs', async ({
+    dashboardPage,
+    readProvisionedDataSource,
+    page
   }) => {
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use name to select the VTEX IO datasource
-    await panelEditPage.datasource.set('VTEX IO');
+    const panelEditPage = await openQueryEditor(page, dashboardPage, readProvisionedDataSource);
 
     // Wait for query editor to load
     await expect(
@@ -227,7 +229,7 @@ test.describe('QueryEditor - Accessibility', () => {
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' })
     ).toBeVisible();
-    
+
     await expect(
       panelEditPage.getQueryEditorRow('A').getByRole('spinbutton', { name: 'Page Size' })
     ).toBeVisible();
@@ -235,22 +237,20 @@ test.describe('QueryEditor - Accessibility', () => {
 });
 
 test.describe('QueryEditor - Predefined Metric Types', () => {
-  test('should offer Request Rate per Account option', async ({ 
-    panelEditPage, 
+  test('should offer Request Rate per Account option', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    // Setup API mocks for app loading - include test-app-1 in the apps list
-    await setupApiMocks(page, {
-      apps: createAppsResponse({
+    const panelEditPage = await openQueryEditor(
+      page,
+      dashboardPage,
+      readProvisionedDataSource,
+      createAppsResponse({
         logsApps: ['test-app-1', 'test-app-2'],
         metricsApps: ['test-app-1', 'test-app-2'],
-      }),
-    });
-
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use robust datasource selection that handles dropdown across Grafana versions
-    await selectDatasource(panelEditPage, page, 'VTEX IO');
+      })
+    );
 
     const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
     await expect(queryTypeCombobox).toBeVisible({ timeout: 10000 });
@@ -264,16 +264,7 @@ test.describe('QueryEditor - Predefined Metric Types', () => {
 
     // Wait for app dropdown to be visible
     const appNameCombobox = page.getByRole('combobox', { name: 'App name' });
-    await expect(appNameCombobox).toBeVisible({ timeout: 10000 });
-    
-    // Wait a moment for apps to load (the useEffect triggers after query type changes)
-    // Then open the dropdown and wait for the option to appear
-    await appNameCombobox.click();
-    
-    // Wait for 'test-app-1' option to appear in the dropdown
-    const testAppOption = page.getByText('test-app-1', { exact: true });
-    await expect(testAppOption).toBeVisible({ timeout: 10000 });
-    await testAppOption.click();
+    await selectComboboxOption(page, appNameCombobox, 'test-app-1');
 
     // Click in the Metrics Type and select the Request Rate per Account option
     const metricsTypeCombobox = page.getByRole('combobox', { name: 'Metric Type' });
@@ -282,22 +273,20 @@ test.describe('QueryEditor - Predefined Metric Types', () => {
     await expect(metricsTypeCombobox).toHaveValue('Request Rate per Account');
   });
 
-  test('should offer Error Rate per Handler option', async ({ 
-    panelEditPage, 
+  test('should offer Error Rate per Handler option', async ({
+    dashboardPage,
     readProvisionedDataSource,
-    page 
+    page
   }) => {
-    // Setup API mocks for app loading - include test-app-1 in the apps list
-    await setupApiMocks(page, {
-      apps: createAppsResponse({
+    const panelEditPage = await openQueryEditor(
+      page,
+      dashboardPage,
+      readProvisionedDataSource,
+      createAppsResponse({
         logsApps: ['test-app-1', 'test-app-2'],
         metricsApps: ['test-app-1', 'test-app-2'],
-      }),
-    });
-
-    const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
-    // Use robust datasource selection that handles dropdown across Grafana versions
-    await selectDatasource(panelEditPage, page, 'VTEX IO');
+      })
+    );
 
     const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
     await expect(queryTypeCombobox).toBeVisible({ timeout: 10000 });
@@ -311,16 +300,7 @@ test.describe('QueryEditor - Predefined Metric Types', () => {
 
     // Wait for app dropdown to be visible
     const appNameCombobox = page.getByRole('combobox', { name: 'App name' });
-    await expect(appNameCombobox).toBeVisible({ timeout: 10000 });
-    
-    // Wait a moment for apps to load (the useEffect triggers after query type changes)
-    // Then open the dropdown and wait for the option to appear
-    await appNameCombobox.click();
-    
-    // Wait for 'test-app-1' option to appear in the dropdown
-    const testAppOption = page.getByText('test-app-1', { exact: true });
-    await expect(testAppOption).toBeVisible({ timeout: 10000 });
-    await testAppOption.click();
+    await selectComboboxOption(page, appNameCombobox, 'test-app-1');
 
     // Click in the Metrics Type and select the Error Rate per Handler option
     const metricsTypeCombobox = page.getByRole('combobox', { name: 'Metric Type' });

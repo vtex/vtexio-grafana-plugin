@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import { PanelEditPage } from '@grafana/plugin-e2e';
 import { ApiMockConfig } from './types';
 import { setupApiMocks } from './apiMocks';
@@ -22,37 +22,81 @@ export async function setupTestWithMocks(
 
 /**
  * Selects a datasource by name, handling dropdown selection across Grafana versions.
- * This is more robust than just using panelEditPage.datasource.set() which may
- * only type text without selecting in newer Grafana versions.
+ * Grafana 13 can render the selected datasource without the data-testid used by
+ * @grafana/plugin-e2e's datasource.set(), so prefer visible editor state and
+ * fall back to role/placeholder based picker interaction.
  */
 export async function selectDatasource(
   panelEditPage: PanelEditPage,
   page: Page,
   datasourceName: string
 ): Promise<void> {
-  // Use the built-in method first
-  await panelEditPage.datasource.set(datasourceName);
+  const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
 
-  // Wait a moment for dropdown to appear
-  await page.waitForTimeout(500);
+  const isEditorAlreadyLoaded = await queryTypeCombobox
+    .waitFor({ state: 'visible', timeout: 1500 })
+    .then(() => true)
+    .catch(() => false);
 
-  // Try to click on the dropdown option if it appears
-  const dropdownOption = page.getByRole('option', { name: datasourceName });
-  const isDropdownVisible = await dropdownOption.isVisible().catch(() => false);
-
-  if (isDropdownVisible) {
-    await dropdownOption.click();
-  } else {
-    // Alternative: try listbox item
-    const listboxItem = page.locator(`[role="listbox"] >> text="${datasourceName}"`);
-    const isListboxVisible = await listboxItem.isVisible().catch(() => false);
-    if (isListboxVisible) {
-      await listboxItem.click();
-    }
+  if (isEditorAlreadyLoaded) {
+    return;
   }
 
-  // Wait for the selection to be confirmed
-  await page.waitForTimeout(300);
+  const datasourcePicker = page
+    .getByRole('textbox', { name: /select a data source/i })
+    .or(page.getByTestId('data-testid Select a data source'))
+    .or(page.getByPlaceholder(datasourceName))
+    .first();
+
+  await expect(datasourcePicker).toBeVisible({ timeout: 15000 });
+  await datasourcePicker.click();
+  await datasourcePicker.fill(datasourceName);
+
+  const datasourceOption = page.getByRole('option', { name: datasourceName }).or(page.getByText(datasourceName, { exact: true }));
+  const isOptionVisible = await datasourceOption
+    .first()
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+
+  if (isOptionVisible) {
+    await datasourceOption.first().click();
+  } else {
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+  }
+
+  await expect(queryTypeCombobox).toBeVisible({ timeout: 15000 });
+}
+
+/**
+ * Selects an option from a Grafana Combobox, including async option providers
+ * that only render suggestions after the user types a filter value.
+ */
+export async function selectComboboxOption(page: Page, combobox: Locator, optionText: string): Promise<void> {
+  await expect(combobox).toBeVisible({ timeout: 10000 });
+
+  await expect(async () => {
+    await combobox.click();
+    await combobox.fill('');
+    await combobox.pressSequentially(optionText);
+
+    const option = page.getByRole('option', { name: optionText }).or(page.getByText(optionText, { exact: true }));
+    const isOptionVisible = await option
+      .first()
+      .waitFor({ state: 'visible', timeout: 1000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (isOptionVisible) {
+      await option.first().click();
+    } else {
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
+    }
+
+    await expect(combobox).toHaveValue(optionText, { timeout: 1000 });
+  }).toPass({ timeout: 15000 });
 }
 
 const VISUALIZATION_SELECTOR_TIMEOUT = 3000;
