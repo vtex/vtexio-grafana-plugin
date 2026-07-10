@@ -167,7 +167,7 @@ export class DataSource
 
     const errors: Array<{ refId: string; message: string }> = [];
     const dataArrays = await Promise.all(
-      options.targets.map(async (target, index) => {
+      options.targets.map(async (target) => {
         try {
           // Merge target with defaults, but preserve filters array if it exists
           const query = defaults(target, DEFAULT_QUERY);
@@ -182,13 +182,6 @@ export class DataSource
 
           return await this.fetchDataFromAPI(query, from, to);
         } catch (error) {
-          console.error('[VTEX Datasource] Error processing target:', {
-            index,
-            refId: target.refId,
-            error: (error as Error).message,
-            stack: (error as Error).stack,
-          });
-          
           // Extract error message
           const errorMessage = this.extractErrorMessage(error);
           
@@ -243,9 +236,6 @@ export class DataSource
   private async fetchDataFromAPI(query: AppQuery, fromTime: number, toTime: number): Promise<DataFrame | DataFrame[]> {
     // Validate required fields
     if (!query.appName) {
-      // FIXME: Remove debug logging before moving out of beta
-      // eslint-disable-next-line no-console
-      console.log('[VTEX Datasource] App name is required but not provided');
       return createDataFrame({
         refId: query.refId,
         name: query.queryType,
@@ -255,9 +245,6 @@ export class DataSource
 
     // For metrics, also validate predefined metric is selected
     if (query.queryType === QueryType.metrics && !query.predefinedMetric) {
-      // FIXME: Remove debug logging before moving out of beta
-      // eslint-disable-next-line no-console
-      console.log('[VTEX Datasource] Predefined metric is required for metrics queries');
       return createDataFrame({
         refId: query.refId,
         name: query.queryType,
@@ -275,15 +262,6 @@ export class DataSource
       filters: query.filters || [],
     };
 
-    // Debug logging to help troubleshoot filter issues
-    // FIXME: Remove debug logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('[VTEX Datasource] Building API request:', {
-      refId: query.refId,
-      filters: bodyParams.filters,
-      filterCount: bodyParams.filters.length,
-    });
-
     try {
       if (query.queryType === QueryType.logsVolume) {
         const volumeResponse = await this.http.FetchLogsVolume(bodyParams);
@@ -296,7 +274,6 @@ export class DataSource
         return this.createGraphDataFrame(query.refId, metricsResponse, query, fromTime);
       }
     } catch (err) {
-      console.error(`[VTEX Datasource] Unable to fetch data from O11yAPI: ${err}`);
       // Re-throw the error so it can be caught in the query method and included in errors array
       throw err;
     }
@@ -344,12 +321,6 @@ export class DataSource
     const errorRateField = metricsResponse.fields.find((f) => f.name === 'error_rate');
 
     if (!timeField || !appField || !handlerField || !errorRateField) {
-      console.error('[VTEX Datasource] Missing required fields for error rate by handler', {
-        hasTime: !!timeField,
-        hasApp: !!appField,
-        hasHandler: !!handlerField,
-        hasErrorRate: !!errorRateField,
-      });
       return createDataFrame({
         refId,
         name: QueryType.metrics,
@@ -427,12 +398,6 @@ export class DataSource
     );
 
     if (!timeField || !handlerField || !boundsField || !countsField) {
-      console.error('[VTEX Datasource] Missing required fields for latency percentile by handler', {
-        hasTime: !!timeField,
-        hasHandler: !!handlerField,
-        hasBounds: !!boundsField,
-        hasCounts: !!countsField,
-      });
       return createDataFrame({
         refId,
         name: QueryType.metrics,
@@ -480,10 +445,7 @@ export class DataSource
             agg.counts[j] = (agg.counts[j] ?? 0) + (row.counts[j] ?? 0);
           }
         } else if (Array.isArray(row.counts) && row.counts.length === agg.counts.length && !boundsMatch) {
-          console.warn('[VTEX Datasource] Skipping histogram row: ExplicitBounds differ for same (time, handler); counts not summed.', {
-            handler: row.handler,
-            time: row.time,
-          });
+          continue;
         }
       }
     }
@@ -630,10 +592,7 @@ export class DataSource
               agg.counts[j] = (agg.counts[j] ?? 0) + (row.counts[j] ?? 0);
             }
           } else if (Array.isArray(row.counts) && row.counts.length === agg.counts.length && !boundsMatch) {
-            console.warn('[VTEX Datasource] Skipping histogram row: ExplicitBounds differ for same (account, handler); counts not summed.', {
-              account: row.account,
-              handler: row.handler,
-            });
+            continue;
           }
         }
       }
@@ -837,9 +796,7 @@ export class DataSource
               agg.counts[j] = (agg.counts[j] ?? 0) + (row.counts[j] ?? 0);
             }
           } else if (Array.isArray(row.counts) && row.counts.length === agg.counts.length && !boundsMatch) {
-            console.warn('[VTEX Datasource] Skipping histogram row: ExplicitBounds differ for same account; counts not summed.', {
-              account: row.account,
-            });
+            continue;
           }
         }
       }
@@ -913,11 +870,6 @@ export class DataSource
     );
 
     if (!timeField || !accountField || !valueField) {
-      console.error('[VTEX Datasource] Missing required fields for time series', {
-        hasTime: !!timeField,
-        hasAccount: !!accountField,
-        hasValue: !!valueField,
-      });
       return createDataFrame({
         refId,
         name: QueryType.metrics,
@@ -1060,7 +1012,6 @@ export class DataSource
     const levelField = apiResponse.fields.find((f) => f.name === 'level');
 
     if (!timeField) {
-      console.error('[VTEX Datasource] Missing TimestampTime field for logs volume');
       return [];
     }
 
@@ -1144,7 +1095,6 @@ export class DataSource
     const messageField = apiResponse.fields.find((f) => f.name === 'data' || f.name === 'message' || f.name === 'body');
 
     if (!timeField) {
-      console.error(`[VTEX Datasource] No time field found in logs data`);
       throw new Error('No time field found in logs data');
     }
 
@@ -1334,9 +1284,8 @@ export class DataSource
               message = error.data.message;
             }
           }
-        } catch (parseErr) {
+        } catch {
           // If parsing fails, use statusText
-          console.error('[VTEX Datasource] Error parsing error response:', parseErr);
         }
       }
       
