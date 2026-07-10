@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import { InlineField, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { VTEXIODataSourceOptions, VTEXIOSecureJsonData } from '../types';
-import { extractTenantFromAppKey } from './utils';
+import { extractTenantFromAppKey, isValidTenantName, normalizeTenantName } from './utils';
 
 interface Props extends DataSourcePluginOptionsEditorProps<VTEXIODataSourceOptions, VTEXIOSecureJsonData> {}
 
@@ -34,11 +34,12 @@ export function ConfigEditor(props: Props) {
   };
 
   const onAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const tenant = normalizeTenantName(event.target.value);
     onOptionsChange({
       ...options,
       jsonData: {
         ...options.jsonData,
-        tenant: event.target.value,
+        tenant: isValidTenantName(tenant) ? tenant : '',
       },
     });
   };

@@ -14,6 +14,7 @@ import {
   PredefinedMetricType,
   QueryFilter,
 } from 'types';
+import { isValidTenantName, normalizeTenantName } from '../utils/tenant';
 
 export const O11Y_API_TIMESTAMP_COLUMN = 'TimestampTime';
 
@@ -40,7 +41,7 @@ abstract class O11yApiClient implements O11yApi {
 
   constructor(prefix: string, proxyUrl: string | null, tenant: string, useTenantInUrl: boolean) {
     this.proxyUrl = proxyUrl;
-    this.tenant = tenant;
+    this.tenant = isValidTenantName(tenant) ? normalizeTenantName(tenant) : '';
     this.useTenantInUrl = useTenantInUrl;
     this._proxyPaths = {
       APPS: `${prefix}/apps`,
