@@ -287,14 +287,6 @@ abstract class O11yApiClient implements O11yApi {
       requestPayload.columns = columns;
     }
 
-    // FIXME: Remove verbose logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('🔧 [O11yApi] Built request payload:', {
-      endpoint,
-      payload: requestPayload,
-      hasColumns: !!columns
-    });
-
     const response = await this.request(url, {
       method: 'POST',
       data: requestPayload,
@@ -302,47 +294,16 @@ abstract class O11yApiClient implements O11yApi {
 
     // Parse the response according to the new Grafana DataFrame API structure
     const apiResponse = response.data as O11yQueryResponse;
-    
-    // FIXME: Remove verbose logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('✨ [O11yApi] Parsed API response:', {
-      endpoint,
-      fieldCount: apiResponse.fields?.length || 0,
-      fields: apiResponse.fields?.map(f => ({ name: f.name, type: f.type, valueCount: f.values?.length || 0 })),
-      refId: apiResponse.refId
-    });
-    
+
     return apiResponse;
   }
 
   async FetchLogs(bodyParams: FetchBodyParams) {
-    // FIXME: Remove verbose logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('📋 [O11yApi] FetchLogs called with params:', {
-      app: bodyParams.app,
-      pageSize: bodyParams.pageSize,
-      timeRange: {
-        from: new Date(bodyParams.fromTime).toISOString(),
-        to: new Date(bodyParams.toTime).toISOString(),
-      }
-    });
     return await this.fetchUsingPost(this._proxyPaths.LOGS_QUERY, bodyParams);
   }
 
   async FetchMetrics(bodyParams: FetchBodyParams) {
     const columns = this.buildMetricsColumns(bodyParams.predefinedMetric);
-    // FIXME: Remove verbose logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('📈 [O11yApi] FetchMetrics called with params:', {
-      app: bodyParams.app,
-      predefinedMetric: bodyParams.predefinedMetric,
-      pageSize: bodyParams.pageSize,
-      timeRange: {
-        from: new Date(bodyParams.fromTime).toISOString(),
-        to: new Date(bodyParams.toTime).toISOString(),
-      },
-      columns: columns
-    });
     return await this.fetchUsingPost(this._proxyPaths.METRICS_QUERY, bodyParams, columns);
   }
 
@@ -364,16 +325,6 @@ abstract class O11yApiClient implements O11yApi {
       columns: [O11Y_API_TIMESTAMP_COLUMN, 'level'],
     };
 
-    // FIXME: Remove verbose logging before moving out of beta
-    // eslint-disable-next-line no-console
-    console.log('📊 [O11yApi] FetchLogsVolume called with params:', {
-      app: bodyParams.app,
-      timeRange: {
-        from: new Date(bodyParams.fromTime).toISOString(),
-        to: new Date(bodyParams.toTime).toISOString(),
-      },
-    });
-
     const response = await this.request(url, {
       method: 'POST',
       data: requestPayload,
@@ -383,8 +334,6 @@ abstract class O11yApiClient implements O11yApi {
   }
 
   handleApiError(err: any) {
-    console.error(`[VTEX Datasource] Request failed:`, err);
-
     let errorMessage = `Request failed`;
 
     if (isFetchError(err)) {
@@ -439,32 +388,6 @@ abstract class O11yApiClient implements O11yApi {
     const { method = 'GET', params, data, headers = {}, serverPath } = options;
     const fullUrl = `${this.proxyUrl}/${proxyPath}${serverPath ? `/${serverPath}` : ''}${params?.length ? `?${params}` : ''}`;
 
-    // FIXME: Remove verbose logging before moving out of beta
-    // Verbose request logging
-    /* eslint-disable no-console */
-    console.group(`🚀 [VTEX API Request] ${method} ${fullUrl}`);
-    console.log('📍 Proxy Path:', proxyPath);
-    console.log('🔧 Method:', method);
-    console.log('🌐 Full URL:', fullUrl);
-    if (params) {
-      console.log('🔍 Query Params:', params);
-    }
-    if (serverPath) {
-      console.log('📂 Server Path:', serverPath);
-    }
-    if (data) {
-      console.log('📦 Request Body:', JSON.stringify(data, null, 2));
-    }
-    console.log('📋 Headers:', {
-      'Content-Type': 'application/json',
-      ...headers,
-    });
-    console.log('⏰ Timestamp:', new Date().toISOString());
-    console.groupEnd();
-    /* eslint-enable no-console */
-
-    const startTime = performance.now();
-
     try {
       const response = getBackendSrv().fetch<DataSourceResponse>({
         url: fullUrl,
@@ -477,48 +400,8 @@ abstract class O11yApiClient implements O11yApi {
       });
 
       const result = await lastValueFrom(response);
-      const endTime = performance.now();
-      const duration = (endTime - startTime).toFixed(2);
-
-      // FIXME: Remove verbose logging before moving out of beta
-      // Verbose response logging
-      /* eslint-disable no-console */
-      console.group(`✅ [VTEX API Response] ${method} ${fullUrl}`);
-      console.log('⏱️ Duration:', `${duration}ms`);
-      console.log('📊 Status:', result.status);
-      console.log('📄 Status Text:', result.statusText);
-      if (result.data) {
-        const dataStr = JSON.stringify(result.data);
-        console.log('📦 Response Size:', `${dataStr.length} characters`);
-        console.log('📦 Response Data:', result.data);
-      }
-      console.groupEnd();
-      /* eslint-enable no-console */
-
       return result;
     } catch (err: any) {
-      const endTime = performance.now();
-      const duration = (endTime - startTime).toFixed(2);
-
-      // FIXME: Remove verbose logging before moving out of beta
-      /* eslint-disable no-console */
-      console.group(`❌ [VTEX API Error] ${method} ${fullUrl}`);
-      console.log('⏱️ Duration:', `${duration}ms`);
-      console.error('🚨 Error:', err);
-
-      // Enhanced error logging
-      if (err.status) {
-        console.error('📊 HTTP Status:', err.status);
-      }
-      if (err.statusText) {
-        console.error('📄 Status Text:', err.statusText);
-      }
-      if (err.data) {
-        console.error('📦 Response Data:', err.data);
-      }
-      console.groupEnd();
-      /* eslint-enable no-console */
-
       // Re-throw the error to be handled by the calling function
       throw err;
     }
