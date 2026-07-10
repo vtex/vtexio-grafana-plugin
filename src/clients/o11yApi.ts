@@ -134,20 +134,15 @@ abstract class O11yApiClient implements O11yApi {
       );
     }
 
-    // Merge UI filters with base filters, preferring UI filters when there's a conflict
-    // A conflict is when both have the same column and operator
+    // Merge UI filters with base filters, preserving base filters when there's a conflict.
+    // A conflict is when both have the same column and operator. Base filters constrain
+    // the selected app and predefined metric shape, so panel filters must not override them.
     const mergedFilters: QueryFilter[] = [...baseFilters];
     const filterKeys = new Set(baseFilters.map((f) => `${f.column}:${f.operator}`));
 
     for (const uiFilter of uiFilters) {
       const key = `${uiFilter.column}:${uiFilter.operator}`;
-      if (filterKeys.has(key)) {
-        // Replace base filter with UI filter if conflict exists
-        const index = mergedFilters.findIndex((f) => `${f.column}:${f.operator}` === key);
-        if (index >= 0) {
-          mergedFilters[index] = uiFilter;
-        }
-      } else {
+      if (!filterKeys.has(key)) {
         // Add UI filter if no conflict
         mergedFilters.push(uiFilter);
         filterKeys.add(key);
