@@ -80,14 +80,17 @@ export function ConfigEditor(props: Props) {
           label="Account"
           labelWidth={14}
           interactive
-          tooltip={'VTEX account to query. Auto-filled from App Key; override here for cross-account access.'}
+          tooltip={
+            'VTEX account to query. Auto-filled from App Key; override here for cross-account access. ' +
+            'Lowercase letters and numbers only (uppercase is converted automatically as you type).'
+          }
         >
           <Input
             id="config-editor-account"
             aria-label="Account"
             onChange={onAccountChange}
             value={jsonData.tenant || ''}
-            placeholder="e.g. mystore"
+            placeholder="e.g. mystore (lowercase letters and numbers only)"
             width={72}
           />
         </InlineField>
