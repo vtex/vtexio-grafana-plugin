@@ -2,7 +2,7 @@ import React, { ChangeEvent } from 'react';
 import { InlineField, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { VTEXIODataSourceOptions, VTEXIOSecureJsonData } from '../types';
-import { extractTenantFromAppKey } from './utils';
+import { extractTenantFromAppKey, isValidTenantName, normalizeTenantName } from './utils';
 
 interface Props extends DataSourcePluginOptionsEditorProps<VTEXIODataSourceOptions, VTEXIOSecureJsonData> {}
 
@@ -34,11 +34,12 @@ export function ConfigEditor(props: Props) {
   };
 
   const onAccountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const tenant = normalizeTenantName(event.target.value);
     onOptionsChange({
       ...options,
       jsonData: {
         ...options.jsonData,
-        tenant: event.target.value,
+        tenant: isValidTenantName(tenant) ? tenant : '',
       },
     });
   };
@@ -79,14 +80,17 @@ export function ConfigEditor(props: Props) {
           label="Account"
           labelWidth={14}
           interactive
-          tooltip={'VTEX account to query. Auto-filled from App Key; override here for cross-account access.'}
+          tooltip={
+            'VTEX account to query. Auto-filled from App Key; override here for cross-account access. ' +
+            'Lowercase letters and numbers only (uppercase is converted automatically as you type).'
+          }
         >
           <Input
             id="config-editor-account"
             aria-label="Account"
             onChange={onAccountChange}
             value={jsonData.tenant || ''}
-            placeholder="e.g. mystore"
+            placeholder="e.g. mystore (lowercase letters and numbers only)"
             width={72}
           />
         </InlineField>
