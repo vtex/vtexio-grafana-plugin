@@ -50,7 +50,7 @@ describe('O11yApiClient - buildFetchFilters', () => {
     expect(filters[1]).toEqual(uiFilters[0]);
   });
 
-  it('should prefer UI filter over base filter when column and operator match', () => {
+  it('should preserve base filter when UI filter has matching column and operator', () => {
     const client = createMockClient();
     const uiFilters: QueryFilter[] = [
       {
@@ -71,7 +71,34 @@ describe('O11yApiClient - buildFetchFilters', () => {
     const filters = (client as any).buildFetchFilters(bodyParams);
 
     expect(filters).toHaveLength(1);
-    expect(filters[0].value).toBe('ui-app-value'); // Should use UI filter value
+    expect(filters[0].value).toBe('base-app-value');
+  });
+
+  it('should preserve predefined metric filters when UI filters have matching column and operator', () => {
+    const client = createMockClient();
+    const uiFilters: QueryFilter[] = [
+      {
+        column: 'MetricName',
+        operator: '=',
+        type: 'string',
+        value: 'attacker-controlled-metric',
+      },
+    ];
+
+    const bodyParams: FetchBodyParams = {
+      fromTime: 1645030240000,
+      toTime: 1645030300000,
+      app: 'test-app',
+      predefinedMetric: PredefinedMetricType.REQUEST_RATE,
+      filters: uiFilters,
+    };
+
+    const filters = (client as any).buildFetchFilters(bodyParams);
+
+    expect(filters).toHaveLength(2);
+    expect(filters.find((f: QueryFilter) => f.column === 'MetricName')?.value).toBe(
+      'runtime_http_requests_total'
+    );
   });
 
   it('should handle multiple UI filters', () => {
@@ -268,4 +295,3 @@ describe('O11yApiClient - buildMetricsColumns', () => {
     }
   });
 });
-
