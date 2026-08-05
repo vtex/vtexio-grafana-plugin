@@ -14,10 +14,15 @@
     },
     "keywords": ["datasource", "VTEX", "VTEX IO"],
     "logos": {
-      "small": "img/logo-vtex.png",
-      "large": "img/logo-vtex.png"
+      "small": "img/logo-vtex-small.png",
+      "large": "img/logo-vtex-large.png"
     },
-    "links": [],
+    "links": [
+      {
+        "name": "Support",
+        "url": "https://supporticket.vtex.com/support"
+      }
+    ],
     "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
