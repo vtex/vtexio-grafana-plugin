@@ -17,7 +17,12 @@
       "small": "img/logo-vtex.png",
       "large": "img/logo-vtex.png"
     },
-    "links": [],
+    "links": [
+      {
+        "name": "Support",
+        "url": "https://supporticket.vtex.com/support"
+      }
+    ],
     "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
