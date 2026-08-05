@@ -51,3 +51,7 @@ All metrics use the `runtime_http_requests_total` metric from the VTEX Observabi
 1. **Select Query Type**: Choose "Logs" from the query type dropdown
 2. **Select App Name**: Choose the VTEX IO app whose logs you want to view
 3. **Configure Page Size**: Adjust the number of log entries to retrieve (default: 100)
+
+## Contributing & Support
+
+Found a bug or want to request a feature? Open a support ticket at [supporticket.vtex.com/support](https://supporticket.vtex.com/support).
