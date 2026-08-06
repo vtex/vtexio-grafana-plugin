@@ -11,3 +11,6 @@ datasources:
     editable: true
     jsonData:
       tenant: 'demo-tenant'
+      # Points both query paths at a locally running read-api instead of production.
+      # Dev-only: there is no UI field for this on purpose, see ConfigEditor.tsx.
+      apiUrl: 'http://host.docker.internal:8080/api/extensions/observability'
