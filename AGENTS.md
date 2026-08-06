@@ -84,6 +84,20 @@ QueryEditor / ConfigEditor (React)
   VTEX Observability API
 ```
 
+The Go backend (added for alerting; see below) keeps its own copy of the query-building
+and percentile logic for the same read-api request/response shapes. The two must build
+the **same** read-api request for the same query model, and the same percentile from the
+same histogram. Two fixture files enforce that, each read by both a Go test and a Jest
+test:
+
+| Fixture | Go test | Jest test |
+|---|---|---|
+| `tests/fixtures/query-contract.json` | `pkg/plugin/query_builder_test.go` | `tests/unit/queryContract.test.ts` |
+| `tests/fixtures/histogram-parity.json` | `pkg/plugin/histogram_test.go` | `tests/unit/histogramParity.test.ts` |
+
+Change one side without the other and CI fails. That is deliberate: silent drift would
+mean a panel and the alert built on it measure different things.
+
 - `O11yApi` knows nothing about React or Grafana panels — only `tenant`, proxy base URL, and request payloads.
 - DataFrame construction (logs, time series, latency tables, percentile graphs) lives **only** in `datasource.ts`. Plugin-side quantile math lives in `src/utils/histogramQuantiles.ts`.
 - Tenant is owned by `ConfigEditor` (extracted from App Key into `jsonData.tenant`); App Token lives in `secureJsonData` and is never read by React code.
