@@ -1,0 +1,596 @@
+{
+  "$comment": [
+    "Shared contract fixtures. The TypeScript client (src/clients/o11yApi.ts) serves dashboards;",
+    "the Go backend (pkg/plugin/query_builder.go) serves alert evaluations. Both must produce the",
+    "same read-api request body for the same query model, or a panel and the alert built on it",
+    "would measure different things.",
+    "",
+    "Asserted by pkg/plugin/query_builder_test.go and tests/unit/queryContract.test.ts.",
+    "Both read THIS file, so a change on one side that is not mirrored on the other fails CI.",
+    "",
+    "fromTime/toTime are fixed epoch ms so the timestamp filters are deterministic."
+  ],
+  "fromTime": 1767225600000,
+  "toTime": 1767229200000,
+  "fromISO": "2026-01-01T00:00:00.000Z",
+  "toISO": "2026-01-01T01:00:00.000Z",
+  "cases": [
+    {
+      "name": "REQUEST_RATE",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "REQUEST_RATE",
+        "pageSize": 100,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_total"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "desc"
+          }
+        ],
+        "columns": [
+          "TimestampTime",
+          "account",
+          "MetricName",
+          "MetricType",
+          "app",
+          "sumMerge(Sum) as Sum"
+        ]
+      }
+    },
+    {
+      "name": "ERROR_RATE_BY_HANDLER",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "ERROR_RATE_BY_HANDLER",
+        "pageSize": 100,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_total"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "asc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "app",
+            "handler"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "app",
+          "ifNull(Attributes['handler'], 'unknown') as handler",
+          "count() AS total_requests",
+          "countIf(toUInt16(Attributes['status_code']) >= 400) AS error_count",
+          "if(total_requests = 0, 0, (error_count / total_requests) * 100) AS error_rate"
+        ]
+      }
+    },
+    {
+      "name": "LATENCY_STATS_BY_ACCOUNT_AND_HANDLER",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "LATENCY_STATS_BY_ACCOUNT_AND_HANDLER",
+        "pageSize": 100,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_duration_milliseconds"
+          },
+          {
+            "column": "MetricType",
+            "operator": "=",
+            "type": "string",
+            "value": "histogram"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "desc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "account",
+            "handler"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "account",
+          "ifNull(Attributes['handler'], 'unknown') as handler",
+          "anyMerge(ExplicitBounds) AS ExplicitBounds",
+          "sumForEachMerge(BucketCounts) AS BucketCounts"
+        ]
+      }
+    },
+    {
+      "name": "LATENCY_STATS_PER_ACCOUNT",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "LATENCY_STATS_PER_ACCOUNT",
+        "pageSize": 100,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_duration_milliseconds"
+          },
+          {
+            "column": "MetricType",
+            "operator": "=",
+            "type": "string",
+            "value": "histogram"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "desc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "account"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "account",
+          "anyMerge(ExplicitBounds) AS ExplicitBounds",
+          "sumForEachMerge(BucketCounts) AS BucketCounts"
+        ]
+      }
+    },
+    {
+      "name": "LATENCY_P50_PER_HANDLER raises pageSize to the chart minimum",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "LATENCY_P50_PER_HANDLER",
+        "pageSize": 100,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 500,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_duration_milliseconds"
+          },
+          {
+            "column": "MetricType",
+            "operator": "=",
+            "type": "string",
+            "value": "histogram"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "asc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "account",
+            "handler"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "account",
+          "ifNull(Attributes['handler'], 'unknown') as handler",
+          "anyMerge(ExplicitBounds) AS ExplicitBounds",
+          "sumForEachMerge(BucketCounts) AS BucketCounts"
+        ]
+      }
+    },
+    {
+      "name": "LATENCY_P90_PER_HANDLER caps pageSize at the chart maximum",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "LATENCY_P90_PER_HANDLER",
+        "pageSize": 100000,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 5000,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_duration_milliseconds"
+          },
+          {
+            "column": "MetricType",
+            "operator": "=",
+            "type": "string",
+            "value": "histogram"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "asc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "account",
+            "handler"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "account",
+          "ifNull(Attributes['handler'], 'unknown') as handler",
+          "anyMerge(ExplicitBounds) AS ExplicitBounds",
+          "sumForEachMerge(BucketCounts) AS BucketCounts"
+        ]
+      }
+    },
+    {
+      "name": "LATENCY_P99_PER_HANDLER",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "LATENCY_P99_PER_HANDLER",
+        "pageSize": 1000,
+        "filters": []
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 1000,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_duration_milliseconds"
+          },
+          {
+            "column": "MetricType",
+            "operator": "=",
+            "type": "string",
+            "value": "histogram"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "asc"
+          }
+        ],
+        "group_by": {
+          "columns": [
+            "TimestampTime",
+            "account",
+            "handler"
+          ]
+        },
+        "columns": [
+          "TimestampTime",
+          "account",
+          "ifNull(Attributes['handler'], 'unknown') as handler",
+          "anyMerge(ExplicitBounds) AS ExplicitBounds",
+          "sumForEachMerge(BucketCounts) AS BucketCounts"
+        ]
+      }
+    },
+    {
+      "name": "panel filter is kept when it does not collide with a base filter",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "REQUEST_RATE",
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "account",
+            "operator": "=",
+            "type": "string",
+            "value": "footloose"
+          }
+        ]
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_total"
+          },
+          {
+            "column": "account",
+            "operator": "=",
+            "type": "string",
+            "value": "footloose"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "desc"
+          }
+        ],
+        "columns": [
+          "TimestampTime",
+          "account",
+          "MetricName",
+          "MetricType",
+          "app",
+          "sumMerge(Sum) as Sum"
+        ]
+      }
+    },
+    {
+      "name": "panel filter colliding with a base filter is dropped, metric constraint wins",
+      "query": {
+        "queryType": "metrics",
+        "appName": "vtex.apps-graphql@3.19.0",
+        "predefinedMetric": "REQUEST_RATE",
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "something_else"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.other@1.0.0"
+          }
+        ]
+      },
+      "expected": {
+        "page": 1,
+        "pageSize": 100,
+        "filters": [
+          {
+            "column": "TimestampTime",
+            "operator": ">=",
+            "type": "timestamp",
+            "value": "2026-01-01T00:00:00.000Z"
+          },
+          {
+            "column": "TimestampTime",
+            "operator": "<=",
+            "type": "timestamp",
+            "value": "2026-01-01T01:00:00.000Z"
+          },
+          {
+            "column": "app",
+            "operator": "=",
+            "type": "string",
+            "value": "vtex.apps-graphql@3.19.0"
+          },
+          {
+            "column": "MetricName",
+            "operator": "=",
+            "type": "string",
+            "value": "runtime_http_requests_total"
+          }
+        ],
+        "orders": [
+          {
+            "column": "TimestampTime",
+            "dir": "desc"
+          }
+        ],
+        "columns": [
+          "TimestampTime",
+          "account",
+          "MetricName",
+          "MetricType",
+          "app",
+          "sumMerge(Sum) as Sum"
+        ]
+      }
+    }
+  ]
+}
