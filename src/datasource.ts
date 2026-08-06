@@ -28,7 +28,13 @@ import {
   AppsResponse,
 } from './types';
 import defaults from 'lodash/defaults';
-import { O11yApi, ProductionO11yApiClient, O11Y_API_TIMESTAMP_COLUMN, API_REQUEST_TIMEOUT_MS } from 'clients/o11yApi';
+import {
+  O11yApi,
+  LocalO11yApiClient,
+  ProductionO11yApiClient,
+  O11Y_API_TIMESTAMP_COLUMN,
+  API_REQUEST_TIMEOUT_MS,
+} from 'clients/o11yApi';
 import { boundsEqual, computeHistogramQuantiles } from './utils/histogramQuantiles';
 
 /** Page size used for latency percentile-by-handler chart queries so multiple time buckets are returned (continuous chart). */
@@ -45,7 +51,13 @@ export class DataSource
   constructor(instanceSettings: DataSourceInstanceSettings<VTEXIODataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
-    this.http = new ProductionO11yApiClient(instanceSettings.jsonData.tenant!, this.instanceSettings.url);
+    // `apiUrl` points both halves of the plugin at a read-api of your choosing: the Go
+    // backend reads it directly, and here it selects the `local` proxy routes, which are
+    // templated off the same field. Unset means production, which is the normal case.
+    const apiUrl = instanceSettings.jsonData.apiUrl?.trim();
+    this.http = apiUrl
+      ? new LocalO11yApiClient(instanceSettings.jsonData.tenant!, this.instanceSettings.url)
+      : new ProductionO11yApiClient(instanceSettings.jsonData.tenant!, this.instanceSettings.url);
   }
 
   getDefaultQuery(_: CoreApp): Partial<AppQuery> {
