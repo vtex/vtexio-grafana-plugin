@@ -32,9 +32,15 @@ export async function selectDatasource(
   datasourceName: string
 ): Promise<void> {
   const queryTypeCombobox = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Query Type' });
+  // "Query Type" alone is ambiguous: on Grafana nightly a new panel starts on the
+  // TestData datasource, whose editor also exposes a "Query type" combobox. The
+  // "Page Size" spinbutton only exists in this plugin's editor, so require both.
+  const pageSizeInput = panelEditPage.getQueryEditorRow('A').getByRole('spinbutton', { name: 'Page Size' });
 
-  const isEditorAlreadyLoaded = await queryTypeCombobox
-    .waitFor({ state: 'visible', timeout: 1500 })
+  const isEditorAlreadyLoaded = await Promise.all([
+    queryTypeCombobox.waitFor({ state: 'visible', timeout: 1500 }),
+    pageSizeInput.waitFor({ state: 'visible', timeout: 1500 }),
+  ])
     .then(() => true)
     .catch(() => false);
 
@@ -44,6 +50,8 @@ export async function selectDatasource(
 
   const datasourcePicker = page
     .getByRole('textbox', { name: /select a data source/i })
+    // Grafana nightly renders the picker input with role combobox instead of textbox
+    .or(page.getByRole('combobox', { name: /select a data source/i }))
     .or(page.getByTestId('data-testid Select a data source'))
     .or(page.getByPlaceholder(datasourceName))
     .first();
@@ -67,6 +75,7 @@ export async function selectDatasource(
   }
 
   await expect(queryTypeCombobox).toBeVisible({ timeout: 15000 });
+  await expect(pageSizeInput).toBeVisible({ timeout: 15000 });
 }
 
 /**
@@ -115,7 +124,18 @@ export async function ensureLogsVisualization(page: Page): Promise<void> {
     await logsButtonG13.click();
     return;
   } catch {
-    // G13 control not found, try G12
+    // G13 control not found, try the nightly suggestions pane
+  }
+
+  try {
+    // Grafana nightly (13.2+): the panel editor shows a visualization suggestions
+    // pane where each visualization is a button named after it, with no testid.
+    const logsSuggestion = page.getByRole('button', { name: 'Logs', exact: true }).first();
+    await logsSuggestion.waitFor({ state: 'visible', timeout: VISUALIZATION_SELECTOR_TIMEOUT });
+    await logsSuggestion.click();
+    return;
+  } catch {
+    // Suggestions pane not found, try G12
   }
 
   try {

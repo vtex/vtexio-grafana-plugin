@@ -87,5 +87,10 @@
     "react-dom": "18.2.0",
     "string-format": "^2.0.0"
   },
-  "packageManager": "npm@10.9.2"
+  "packageManager": "npm@10.9.2",
+  "overrides": {
+    "@grafana/plugin-e2e": {
+      "@grafana/e2e-selectors": "13.2.0-30866084945"
+    }
+  }
 }
