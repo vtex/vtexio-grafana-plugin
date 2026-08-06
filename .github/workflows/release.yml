@@ -4,6 +4,7 @@ name: Release
 on:
   release:
     types: [published]
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -20,6 +21,12 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: go.sum
 
       - name: Install dependencies
         run: npm ci
@@ -45,7 +52,51 @@ jobs:
           echo "path=$file" >> $GITHUB_OUTPUT
           echo "name=$(basename "$file")" >> $GITHUB_OUTPUT
 
+      - name: Verify the signed plugin loads with signature verification enforced
+        run: |
+          set -euo pipefail
+
+          # Every other check we run (local dev, CI e2e) sets
+          # GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS, which bypasses signature
+          # verification entirely. Nothing has ever tested the path a real
+          # customer's Grafana actually takes: verify the signature, then load.
+          mkdir -p verify-plugin
+          unzip -q "${{ steps.artifact.outputs.path }}" -d verify-plugin
+          plugin_dir=$(find verify-plugin -mindepth 1 -maxdepth 1 -type d | head -n1)
+          chmod +x "$plugin_dir"/gpx_* 2>/dev/null || true
+
+          docker run -d --name grafana-signature-check \
+            -p 3001:3000 \
+            -v "$PWD/$plugin_dir:/var/lib/grafana/plugins/vtexio-grafana-datasource" \
+            grafana/grafana-enterprise:11.5.3
+
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:3001/login; then
+              echo "Grafana is up"
+              break
+            fi
+            sleep 2
+          done
+
+          logs=$(docker logs grafana-signature-check 2>&1)
+          echo "$logs" | tail -100
+
+          if echo "$logs" | grep -qi "permitting unsigned plugin"; then
+            echo "FAIL: plugin loaded only because signature verification was bypassed"
+            exit 1
+          fi
+          if ! echo "$logs" | grep -q 'pluginId=vtexio-grafana-datasource'; then
+            echo "FAIL: plugin never registered with Grafana"
+            exit 1
+          fi
+          echo "OK: plugin registered with signature verification enforced"
+
+      - name: Tear down signature-check Grafana
+        if: always()
+        run: docker rm -f grafana-signature-check 2>/dev/null || true
+
       - name: Upload signed plugin to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.artifact.outputs.path }}
