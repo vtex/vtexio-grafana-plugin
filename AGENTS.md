@@ -57,7 +57,9 @@ make download-zip                 # download release artifact via gh
 - Prettier: single quotes, semicolons, 2-space tabs, `printWidth: 120`, `trailingComma: 'es5'`.
 - ESLint enforces `@grafana/eslint-config` plus `deprecation/deprecation` (warn) on `src/**`.
 - Do **not** edit files under `.config/` (scaffolded by `@grafana/create-plugin`); extend via the project-root configs (`.eslintrc`, `.prettierrc.js`, `jest.config.js`, `tsconfig.json`).
-- All API calls go through `O11yApi` (which uses `getBackendSrv().fetch`). Never call VTEX endpoints directly from React.
+- All API calls **from React** go through `O11yApi` (which uses `getBackendSrv().fetch`). Never call VTEX
+  endpoints directly from React. The Go backend calls read-api directly on purpose — it has no browser
+  and no proxy available, and its credentials never reach the client.
 
 ## Testing
 
