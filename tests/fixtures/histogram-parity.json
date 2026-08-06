@@ -1,0 +1,171 @@
+{
+  "$comment": [
+    "Percentile parity fixtures. read-api has no quantile aggregation - the metrics table",
+    "stores histograms as sumForEach bucket counts with no quantiles aggregate state - so",
+    "percentiles are interpolated by the caller. The TypeScript path does it for dashboards",
+    "and the Go backend does it for alerts; if they diverge, a threshold set by eye on a panel",
+    "would mean something different to the alert.",
+    "",
+    "Asserted by pkg/plugin/histogram_test.go and tests/unit/histogramParity.test.ts.",
+    "null means NaN (no value)."
+  ],
+  "quantiles": [
+    0.5,
+    0.9,
+    0.95,
+    0.99
+  ],
+  "cases": [
+    {
+      "name": "typical latency histogram",
+      "bounds": [
+        5,
+        10,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000
+      ],
+      "counts": [
+        120,
+        340,
+        510,
+        220,
+        90,
+        30,
+        8,
+        2
+      ],
+      "expected": [
+        15.882352941176471,
+        49.77272727272727,
+        85.55555555555556,
+        233.99999999999977
+      ]
+    },
+    {
+      "name": "all samples in the first bucket",
+      "bounds": [
+        5,
+        10,
+        25
+      ],
+      "counts": [
+        100,
+        0,
+        0
+      ],
+      "expected": [
+        2.5,
+        4.5,
+        4.75,
+        4.95
+      ]
+    },
+    {
+      "name": "all samples in the last bucket",
+      "bounds": [
+        5,
+        10,
+        25
+      ],
+      "counts": [
+        0,
+        0,
+        100
+      ],
+      "expected": [
+        17.5,
+        23.5,
+        24.25,
+        24.85
+      ]
+    },
+    {
+      "name": "empty histogram yields no value",
+      "bounds": [
+        5,
+        10,
+        25
+      ],
+      "counts": [
+        0,
+        0,
+        0
+      ],
+      "expected": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "single bucket",
+      "bounds": [
+        100
+      ],
+      "counts": [
+        42
+      ],
+      "expected": [
+        50.0,
+        90.00000000000001,
+        95.0,
+        99.0
+      ]
+    },
+    {
+      "name": "zero-count bucket at the crossing point",
+      "bounds": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "counts": [
+        50,
+        0,
+        0,
+        50
+      ],
+      "expected": [
+        10.0,
+        38.0,
+        39.0,
+        39.8
+      ]
+    },
+    {
+      "name": "length mismatch yields no value",
+      "bounds": [
+        10,
+        20,
+        30
+      ],
+      "counts": [
+        5,
+        5
+      ],
+      "expected": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "no bounds yields no value",
+      "bounds": [],
+      "counts": [],
+      "expected": [
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ]
+}
