@@ -20,9 +20,10 @@
     "clean": "rm -rf grafana-plugins/ vtexio-grafana-plugin-build/",
     "clean:all": "rm -rf dist/* grafana-plugins/ vtexio-grafana-plugin-build/ && mkdir -p dist",
     "prebuild": "npm run clean",
-    "preserver": "echo 'Server starting - keeping built plugin files'",
+    "preserver": "npm run build:backend:local",
     "server": "docker-compose up --build",
-    "sign": "npx --yes @grafana/sign-plugin@latest --rootUrls https://grafana.com,https://vtexioapps.grafana.net,https://grafana-beta.vtex.com,http://localhost:3000"
+    "sign": "npx --yes @grafana/sign-plugin@latest --rootUrls https://grafana.com,https://vtexioapps.grafana.net,https://grafana-beta.vtex.com,http://localhost:3000",
+    "build:backend:local": "go run github.com/magefile/mage@latest -v build:linux build:linuxARM64"
   },
   "author": "VTEX",
   "license": "Apache-2.0",
