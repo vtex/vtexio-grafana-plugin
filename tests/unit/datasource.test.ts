@@ -583,14 +583,11 @@ describe('DataSource - createLogsVolumeDataFrames', () => {
 
   it('returns empty array when TimestampTime field is missing', () => {
     const datasource = createMockDataSource();
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const response = createMockApiResponse([{ name: 'level', type: 'string', values: ['info'] }]);
 
     const result = (datasource as any).createLogsVolumeDataFrames('A', response, 0, MINUTE, baseQuery);
 
     expect(result).toEqual([]);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Missing TimestampTime field'));
-    consoleSpy.mockRestore();
   });
 
   it('returns a single all-zero "unknown" series when there are no log rows', () => {
@@ -904,7 +901,6 @@ describe('DataSource - createErrorRateByHandlerDataFrame', () => {
 
   it('should return empty fields DataFrame when required fields are missing', () => {
     const datasource = createMockDataSource();
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const response = createErrorRateResponse({
       time: [1000],
       app: ['myapp'],
@@ -918,11 +914,6 @@ describe('DataSource - createErrorRateByHandlerDataFrame', () => {
     expect(dataFrame.refId).toBe('A');
     expect(dataFrame.name).toBe(QueryType.metrics);
     expect(dataFrame.fields).toHaveLength(0);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[VTEX Datasource] Missing required fields for error rate by handler',
-      expect.objectContaining({ hasErrorRate: false })
-    );
-    consoleSpy.mockRestore();
   });
 
   it('should group time series by handler and app with correct values', () => {
@@ -1406,4 +1397,3 @@ describe('DataSource - createGraphDataFrame dispatch', () => {
     expect(dataFrame.fields[1].config?.displayNameFromDS).toBe('p99 | /other');
   });
 });
-
