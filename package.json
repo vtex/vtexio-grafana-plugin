@@ -2,7 +2,7 @@
   "name": "vtexio-grafana-plugin",
   "version": "0.2.2-beta.0",
   "scripts": {
-    "build": "npm run build:frontend && npm run build:backend",
+    "build": "npm run build:backend && npm run build:frontend",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
     "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource-$npm_package_version && rm -rf vtexio-grafana-datasource-$npm_package_version",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
