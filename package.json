@@ -2,7 +2,7 @@
   "name": "vtexio-grafana-plugin",
   "version": "0.2.2-beta.0",
   "scripts": {
-    "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
+    "build": "npm run build:backend && npm run build:frontend --",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
     "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource-$npm_package_version && rm -rf vtexio-grafana-datasource-$npm_package_version",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
@@ -20,9 +20,12 @@
     "clean": "rm -rf grafana-plugins/ vtexio-grafana-plugin-build/",
     "clean:all": "rm -rf dist/* grafana-plugins/ vtexio-grafana-plugin-build/ && mkdir -p dist",
     "prebuild": "npm run clean",
-    "preserver": "echo 'Server starting - keeping built plugin files'",
+    "preserver": "npm run build:backend:local",
     "server": "docker-compose up --build",
-    "sign": "npx --yes @grafana/sign-plugin@latest --rootUrls https://grafana.com,https://vtexioapps.grafana.net,https://grafana-beta.vtex.com,http://localhost:3000"
+    "sign": "npx --yes @grafana/sign-plugin@latest --rootUrls https://grafana.com,https://vtexioapps.grafana.net,https://grafana-beta.vtex.com,http://localhost:3000",
+    "build:backend": "go run github.com/magefile/mage@latest -v buildAll",
+    "build:backend:local": "go run github.com/magefile/mage@latest -v build:linux build:linuxARM64",
+    "build:frontend": "webpack -c ./.config/webpack/webpack.config.ts --env production"
   },
   "author": "VTEX",
   "license": "Apache-2.0",

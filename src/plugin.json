@@ -7,12 +7,19 @@
   "logs": true,
   "multiValueFilterOperators": true,
   "state": "beta",
+  "backend": true,
+  "alerting": true,
+  "executable": "gpx_vtexio_grafana_datasource",
   "info": {
     "description": "VTEX IO Data Source for Grafana",
     "author": {
       "name": "VTEX"
     },
-    "keywords": ["datasource", "VTEX", "VTEX IO"],
+    "keywords": [
+      "datasource",
+      "VTEX",
+      "VTEX IO"
+    ],
     "logos": {
       "small": "img/logo-vtex.png",
       "large": "img/logo-vtex.png"
@@ -27,10 +34,10 @@
     "plugins": []
   },
   "routes": [
-   {
-     "path": "local/apps",
-     "url": "http://host.docker.internal:8080/{{ .JsonData.tenant }}/apps",
-     "headers": [
+    {
+      "path": "local/apps",
+      "url": "{{ .JsonData.apiUrl }}/{{ .JsonData.tenant }}/apps",
+      "headers": [
         {
           "name": "X-VTEX-API-AppKey",
           "content": "{{ .JsonData.appKey }}"
@@ -39,12 +46,12 @@
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
         }
-     ]
-   },
-   {
-     "path": "local/logs/fields",
-     "url": "http://host.docker.internal:8080/logs/{{ .JsonData.tenant }}/fields",
-     "headers": [
+      ]
+    },
+    {
+      "path": "local/logs/fields",
+      "url": "{{ .JsonData.apiUrl }}/logs/{{ .JsonData.tenant }}/fields",
+      "headers": [
         {
           "name": "X-VTEX-API-AppKey",
           "content": "{{ .JsonData.appKey }}"
@@ -53,12 +60,12 @@
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
         }
-     ]
-   },
-   {
-     "path": "local/logs/query",
-     "url": "http://host.docker.internal:8080/logs/{{ .JsonData.tenant }}/query",
-     "headers": [
+      ]
+    },
+    {
+      "path": "local/logs/query",
+      "url": "{{ .JsonData.apiUrl }}/logs/{{ .JsonData.tenant }}/query",
+      "headers": [
         {
           "name": "X-VTEX-API-AppKey",
           "content": "{{ .JsonData.appKey }}"
@@ -67,12 +74,12 @@
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
         }
-     ]
-   },
-   {
-     "path": "local/metrics/fields",
-     "url": "http://host.docker.internal:8080/metrics/{{ .JsonData.tenant }}/fields",
-     "headers": [
+      ]
+    },
+    {
+      "path": "local/metrics/fields",
+      "url": "{{ .JsonData.apiUrl }}/metrics/{{ .JsonData.tenant }}/fields",
+      "headers": [
         {
           "name": "X-VTEX-API-AppKey",
           "content": "{{ .JsonData.appKey }}"
@@ -81,12 +88,12 @@
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
         }
-     ]
-   },
-   {
-     "path": "local/metrics/query",
-     "url": "http://host.docker.internal:8080/metrics/{{ .JsonData.tenant }}/query",
-     "headers": [
+      ]
+    },
+    {
+      "path": "local/metrics/query",
+      "url": "{{ .JsonData.apiUrl }}/metrics/{{ .JsonData.tenant }}/query",
+      "headers": [
         {
           "name": "X-VTEX-API-AppKey",
           "content": "{{ .JsonData.appKey }}"
@@ -95,105 +102,105 @@
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
         }
-     ]
-   },
-   {
-    "path": "local/metrics/names",
-    "url": "http://host.docker.internal:8080/metrics/{{ .JsonData.tenant }}",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-    "path": "remote/apps",
-    "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/{{ .JsonData.tenant }}/apps",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-    "path": "remote/logs/fields",
-    "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/logs/{{ .JsonData.tenant }}/fields",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-    "path": "remote/logs/query",
-    "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/logs/{{ .JsonData.tenant }}/query",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-    "path": "remote/metrics/fields",
-    "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/fields",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-    "path": "remote/metrics/query",
-    "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/query",
-    "headers": [
-       {
-         "name": "X-VTEX-API-AppKey",
-         "content": "{{ .JsonData.appKey }}"
-       },
-       {
-         "name": "X-VTEX-API-AppToken",
-         "content": "{{ .SecureJsonData.appToken }}"
-       }
-    ]
-  },
-  {
-   "path": "remote/metrics/names",
-   "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/",
-   "headers": [
-      {
-        "name": "X-VTEX-API-AppKey",
-        "content": "{{ .JsonData.appKey }}"
-      },
-      {
-        "name": "X-VTEX-API-AppToken",
-        "content": "{{ .SecureJsonData.appToken }}"
-      }
-   ]
-  }
- ]
+      ]
+    },
+    {
+      "path": "local/metrics/names",
+      "url": "{{ .JsonData.apiUrl }}/metrics/{{ .JsonData.tenant }}",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/apps",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/{{ .JsonData.tenant }}/apps",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/logs/fields",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/logs/{{ .JsonData.tenant }}/fields",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/logs/query",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/logs/{{ .JsonData.tenant }}/query",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/metrics/fields",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/fields",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/metrics/query",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/query",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    },
+    {
+      "path": "remote/metrics/names",
+      "url": "https://{{ .JsonData.tenant }}.vtexcommercebeta.com.br/api/extensions/observability/metrics/{{ .JsonData.tenant }}/",
+      "headers": [
+        {
+          "name": "X-VTEX-API-AppKey",
+          "content": "{{ .JsonData.appKey }}"
+        },
+        {
+          "name": "X-VTEX-API-AppToken",
+          "content": "{{ .SecureJsonData.appToken }}"
+        }
+      ]
+    }
+  ]
 }
