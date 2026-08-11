@@ -52,7 +52,7 @@ jobs:
           echo "path=$file" >> $GITHUB_OUTPUT
           echo "name=$(basename "$file")" >> $GITHUB_OUTPUT
 
-      - name: Verify the signed plugin loads with signature verification enforced
+      - name: Verify Plugin Signature
         run: |
           set -euo pipefail
 
