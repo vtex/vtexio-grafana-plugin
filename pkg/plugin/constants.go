@@ -13,3 +13,7 @@ const (
 	// account for scheduled traffic separately from interactive dashboard use.
 	headerFromAlert = "X-Grafana-From-Alert"
 )
+
+// productionBaseURLTemplate is the read-api base URL for a tenant when no local
+// override is configured. %s is replaced with the URL-escaped tenant name.
+const productionBaseURLTemplate = "https://%s.vtexcommercebeta.com.br/api/extensions/observability"

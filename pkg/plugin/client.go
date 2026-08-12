@@ -32,13 +32,8 @@ type Client struct {
 // the frontend can point at a local read-api through the Grafana proxy, and without an
 // override the backend could only ever reach production. Leave it empty for production.
 func NewClient(tenant, appKey, appToken, apiURL string) *Client {
-	base := strings.TrimRight(strings.TrimSpace(apiURL), "/")
-	if base == "" {
-		base = fmt.Sprintf("https://%s.vtexcommercebeta.com.br/api/extensions/observability", url.PathEscape(tenant))
-	}
-
 	return &Client{
-		baseURL:  base,
+		baseURL:  parseBaseURL(tenant, apiURL),
 		tenant:   tenant,
 		appKey:   appKey,
 		appToken: appToken,
