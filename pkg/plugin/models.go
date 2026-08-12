@@ -66,10 +66,11 @@ func (m PredefinedMetric) quantile() (label string, q float64, ok bool) {
 	return "", 0, false
 }
 
-// QueryModel is the per-target JSON Grafana sends to the backend. Field names match
-// the AppQuery interface in src/types.ts.
+// QueryModel is the per-target JSON Grafana sends to the backend. JSON tags match
+// the AppQuery interface in src/types.ts; the Go field is named Type rather than
+// QueryType to avoid the query.QueryType stutter at call sites.
 type QueryModel struct {
-	QueryType        QueryType        `json:"queryType"`
+	Type             QueryType        `json:"queryType"`
 	AppName          string           `json:"appName"`
 	PredefinedMetric PredefinedMetric `json:"predefinedMetric"`
 	MetricType       string           `json:"metricType,omitempty"`
