@@ -75,8 +75,8 @@ func (c *Client) FetchLogsFields(ctx context.Context) error {
 	}
 	defer func() { _ = res.Body.Close() }()
 
-	_, _ = io.Copy(io.Discard, io.LimitReader(res.Body, 1<<20))
-	return statusError(res.StatusCode)
+	raw, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
+	return statusError(res.StatusCode, raw)
 }
 
 func (c *Client) post(ctx context.Context, endpoint string, body O11yQueryRequest, fromAlert bool) (*O11yQueryResponse, error) {
@@ -104,7 +104,7 @@ func (c *Client) post(ctx context.Context, endpoint string, body O11yQueryReques
 		return nil, fmt.Errorf("reading response: %w", err)
 	}
 
-	if err := statusError(res.StatusCode); err != nil {
+	if err := statusError(res.StatusCode, raw); err != nil {
 		return nil, err
 	}
 
@@ -122,20 +122,5 @@ func (c *Client) setHeaders(req *http.Request, fromAlert bool) {
 	req.Header.Set(headerAppToken, c.appToken)
 	if fromAlert {
 		req.Header.Set(headerFromAlert, "true")
-	}
-}
-
-// statusError maps an HTTP status to an error whose text is safe to show a user: it
-// describes the failure without echoing the request, which carries the credentials.
-func statusError(status int) error {
-	switch {
-	case status >= 200 && status < 300:
-		return nil
-	case status == http.StatusUnauthorized || status == http.StatusForbidden:
-		return fmt.Errorf("authentication failed (HTTP %d): check the App Key and App Token configured on this data source", status)
-	case status == http.StatusTooManyRequests:
-		return fmt.Errorf("quota or rate limit exceeded (HTTP %d) for this tenant", status)
-	default:
-		return fmt.Errorf("the VTEX Observability API returned HTTP %d", status)
 	}
 }

@@ -17,3 +17,8 @@ const (
 // productionBaseURLTemplate is the read-api base URL for a tenant when no local
 // override is configured. %s is replaced with the URL-escaped tenant name.
 const productionBaseURLTemplate = "https://%s.vtexcommercebeta.com.br/api/extensions/observability"
+
+// maxStatusErrorBodyPreview bounds how much of an unexpected-status response body
+// gets echoed into an error message, so a pathological response can't produce an
+// unreadable (or enormous) error.
+const maxStatusErrorBodyPreview = 500
