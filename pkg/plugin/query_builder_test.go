@@ -60,7 +60,7 @@ func TestBuildRequestMatchesSharedContract(t *testing.T) {
 func TestBuildRequestStep(t *testing.T) {
 	from := time.UnixMilli(1767225600000).UTC()
 	to := time.UnixMilli(1767229200000).UTC()
-	q := QueryModel{QueryType: QueryTypeMetrics, AppName: "app", PredefinedMetric: MetricRequestRate, PageSize: 100}
+	q := QueryModel{Type: QueryTypeMetrics, AppName: "app", PredefinedMetric: MetricRequestRate, PageSize: 100}
 
 	t.Run("absent step is omitted from the body", func(t *testing.T) {
 		body, err := json.Marshal(BuildRequest(q, from, to, nil))

@@ -29,7 +29,7 @@ func BuildRequest(q QueryModel, from, to time.Time, step *int) O11yQueryRequest 
 		Step:     step,
 	}
 
-	if q.QueryType == QueryTypeMetrics {
+	if q.Type == QueryTypeMetrics {
 		req.Columns = buildMetricsColumns(q.PredefinedMetric)
 	}
 	if gb := buildGroupBy(q.PredefinedMetric); gb != nil {
@@ -43,7 +43,7 @@ func BuildRequest(q QueryModel, from, to time.Time, step *int) O11yQueryRequest 
 // charts need enough time buckets to draw a continuous line, but still respect a
 // user-tuned page size.
 func pageSizeFor(q QueryModel) int {
-	if q.QueryType == QueryTypeMetrics && q.PredefinedMetric.isLatencyPercentile() {
+	if q.Type == QueryTypeMetrics && q.PredefinedMetric.isLatencyPercentile() {
 		userPageSize := q.PageSize
 		if userPageSize == 0 {
 			userPageSize = defaultPageSize
