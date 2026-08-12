@@ -52,67 +52,71 @@ func (c *Client) IsConfigured() bool {
 
 // QueryMetrics posts a metrics query and decodes the DataFrame-shaped response.
 func (c *Client) QueryMetrics(ctx context.Context, body O11yQueryRequest, fromAlert bool) (*O11yQueryResponse, error) {
-	return c.post(ctx, fmt.Sprintf("%s/metrics/%s/query", c.baseURL, url.PathEscape(c.tenant)), body, fromAlert)
+	return c.postQuery(ctx, fmt.Sprintf("%s/metrics/%s/query", c.baseURL, url.PathEscape(c.tenant)), body, fromAlert)
 }
 
 // QueryLogs posts a logs query and decodes the DataFrame-shaped response.
 func (c *Client) QueryLogs(ctx context.Context, body O11yQueryRequest, fromAlert bool) (*O11yQueryResponse, error) {
-	return c.post(ctx, fmt.Sprintf("%s/logs/%s/query", c.baseURL, url.PathEscape(c.tenant)), body, fromAlert)
+	return c.postQuery(ctx, fmt.Sprintf("%s/logs/%s/query", c.baseURL, url.PathEscape(c.tenant)), body, fromAlert)
 }
 
 // FetchLogsFields is a cheap reachability probe used by the health check.
 func (c *Client) FetchLogsFields(ctx context.Context) error {
 	endpoint := fmt.Sprintf("%s/logs/%s/fields", c.baseURL, url.PathEscape(c.tenant))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return fmt.Errorf("building request: %w", err)
-	}
-	c.setHeaders(req, false)
-
-	res, err := c.http.Do(req)
-	if err != nil {
-		return fmt.Errorf("reaching the VTEX Observability API: %w", err)
-	}
-	defer func() { _ = res.Body.Close() }()
-
-	raw, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
-	return statusError(res.StatusCode, raw)
+	_, err := c.do(ctx, http.MethodGet, endpoint, nil, false, maxHealthCheckBodySize)
+	return err
 }
 
-func (c *Client) post(ctx context.Context, endpoint string, body O11yQueryRequest, fromAlert bool) (*O11yQueryResponse, error) {
+// postQuery marshals body, executes it as a POST, and decodes the DataFrame-shaped
+// response. QueryMetrics and QueryLogs differ only in endpoint, so they both funnel
+// through here.
+func (c *Client) postQuery(ctx context.Context, endpoint string, body O11yQueryRequest, fromAlert bool) (*O11yQueryResponse, error) {
 	payload, err := json.Marshal(body)
 	if err != nil {
-		return nil, fmt.Errorf("encoding request: %w", err)
+		return nil, fmt.Errorf("encoding request body for %s: %w", endpoint, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+	raw, err := c.do(ctx, http.MethodPost, endpoint, bytes.NewReader(payload), fromAlert, maxQueryResponseBodySize)
 	if err != nil {
-		return nil, fmt.Errorf("building request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	c.setHeaders(req, fromAlert)
-
-	res, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("reaching the VTEX Observability API: %w", err)
-	}
-	defer func() { _ = res.Body.Close() }()
-
-	// Bound the read: a runaway response should not exhaust the Grafana process.
-	raw, err := io.ReadAll(io.LimitReader(res.Body, 64<<20))
-	if err != nil {
-		return nil, fmt.Errorf("reading response: %w", err)
-	}
-
-	if err := statusError(res.StatusCode, raw); err != nil {
 		return nil, err
 	}
 
 	var decoded O11yQueryResponse
 	if err := json.Unmarshal(raw, &decoded); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
+		return nil, fmt.Errorf("decoding response from %s: %w", endpoint, err)
 	}
 	return &decoded, nil
+}
+
+// do builds and executes an HTTP request against the read-api and returns its body
+// once the response is confirmed successful. postQuery and FetchLogsFields both
+// funnel through here, so request construction, headers, the bounded body read, and
+// status-code handling stay in one place instead of being duplicated per call.
+func (c *Client) do(ctx context.Context, method, endpoint string, body io.Reader, fromAlert bool, maxBodySize int64) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, body)
+	if err != nil {
+		return nil, fmt.Errorf("building %s request to %s: %w", method, endpoint, err)
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	c.setHeaders(req, fromAlert)
+
+	res, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("reaching the VTEX Observability API at %s: %w", endpoint, err)
+	}
+	defer func() { _ = res.Body.Close() }()
+
+	raw, err := io.ReadAll(io.LimitReader(res.Body, maxBodySize))
+	if err != nil {
+		return nil, fmt.Errorf("reading response from %s: %w", endpoint, err)
+	}
+
+	if err := statusError(res.StatusCode, raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
 }
 
 // setHeaders attaches auth and, when this query backs an alert rule, the marker

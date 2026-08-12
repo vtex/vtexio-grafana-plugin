@@ -22,3 +22,14 @@ const productionBaseURLTemplate = "https://%s.vtexcommercebeta.com.br/api/extens
 // gets echoed into an error message, so a pathological response can't produce an
 // unreadable (or enormous) error.
 const maxStatusErrorBodyPreview = 500
+
+const (
+	// maxHealthCheckBodySize bounds the reachability probe's response read: it only
+	// needs to observe the status code, never the body.
+	maxHealthCheckBodySize = 1 << 20 // 1MB
+
+	// maxQueryResponseBodySize bounds a query response read: large enough for any
+	// real read-api payload, small enough that a runaway response cannot exhaust the
+	// Grafana process.
+	maxQueryResponseBodySize = 64 << 20 // 64MB
+)
