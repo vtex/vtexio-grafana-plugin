@@ -17,7 +17,7 @@ import (
 //
 // Dashboard queries still run through the TypeScript path and the data source proxy.
 type Datasource struct {
-	client *Client
+	client *O11yApiClient
 }
 
 var (
@@ -92,7 +92,7 @@ func (d *Datasource) query(ctx context.Context, q backend.DataQuery, fromAlert b
 	if model.AppName == "" {
 		return errorResponse(backend.StatusBadRequest, errors.New("select an app before running this query"))
 	}
-	if model.QueryType == QueryTypeMetrics && model.PredefinedMetric == "" {
+	if model.Type == QueryTypeMetrics && model.PredefinedMetric == "" {
 		return errorResponse(backend.StatusBadRequest, errors.New("select a metric before running this query"))
 	}
 

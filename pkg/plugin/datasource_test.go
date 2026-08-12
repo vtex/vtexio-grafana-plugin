@@ -35,7 +35,7 @@ func newTestDatasource(t *testing.T, handler http.HandlerFunc) (*Datasource, *ht
 func metricsQuery(t *testing.T, refID string, metric PredefinedMetric) backend.DataQuery {
 	t.Helper()
 	raw, err := json.Marshal(QueryModel{
-		QueryType:        QueryTypeMetrics,
+		Type:             QueryTypeMetrics,
 		AppName:          "vtex.apps-graphql@3.19.0",
 		PredefinedMetric: metric,
 		PageSize:         100,
