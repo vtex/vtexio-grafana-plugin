@@ -83,7 +83,7 @@ func TestBuildFramesTrimsUnsettledBucketOnlyForAlerts(t *testing.T) {
 		{Name: "account", Type: "string", Values: []interface{}{"footloose", "footloose"}},
 		{Name: "Sum", Type: "number", Values: []interface{}{9.0, 3.0}},
 	}}
-	q := QueryModel{QueryType: QueryTypeMetrics, AppName: "a", PredefinedMetric: MetricRequestRate}
+	q := QueryModel{Type: QueryTypeMetrics, AppName: "a", PredefinedMetric: MetricRequestRate}
 	to := time.Date(2026, 1, 1, 1, 0, 0, 0, time.UTC)
 
 	t.Run("alert evaluation drops the unsettled bucket", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestBuildFramesTrimToEmptyReturnsZeroFrames(t *testing.T) {
 		{Name: "account", Type: "string", Values: []interface{}{"footloose"}},
 		{Name: "Sum", Type: "number", Values: []interface{}{9.0}},
 	}}
-	q := QueryModel{QueryType: QueryTypeMetrics, AppName: "a", PredefinedMetric: MetricRequestRate}
+	q := QueryModel{Type: QueryTypeMetrics, AppName: "a", PredefinedMetric: MetricRequestRate}
 	step := 60
 
 	frames := BuildFrames("A", q, &response, true, &step, time.Date(2026, 1, 1, 1, 0, 0, 0, time.UTC))
@@ -162,7 +162,7 @@ func TestEmptyResultReturnsZeroFrames(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			q := QueryModel{QueryType: QueryTypeMetrics, AppName: "a", PredefinedMetric: tc.metric}
+			q := QueryModel{Type: QueryTypeMetrics, AppName: "a", PredefinedMetric: tc.metric}
 			frames := BuildFrames("A", q, &tc.res, tc.fromAlert, nil, time.Time{})
 			require.Empty(t, frames, "an empty result must produce zero frames, not one unclassifiable frame")
 		})
