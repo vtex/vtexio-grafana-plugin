@@ -119,6 +119,12 @@ export interface DataSourceResponse {
 export interface VTEXIODataSourceOptions extends DataSourceJsonData {
   appKey: string;
   tenant?: string;
+  /**
+   * Overrides the read-api base URL, e.g. http://host.docker.internal:8080/api/extensions/observability
+   * for a locally running read-api. Read by both query paths: the Go backend uses it directly,
+   * and the frontend uses it to select the `local` proxy routes. Leave unset for production.
+   */
+  apiUrl?: string;
 }
 
 /**

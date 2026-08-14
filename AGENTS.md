@@ -2,9 +2,14 @@
 
 ## Project
 
-VTEX IO Grafana Datasource is a **frontend-only Grafana data source plugin** that exposes VTEX IO Observability (logs + metrics) as Grafana panels. It has no backend binary: queries flow from React UI → `DataSource.query()` → `O11yApi` client → Grafana data-source proxy → VTEX Observability API.
+VTEX IO Grafana Datasource exposes VTEX IO Observability (logs + metrics) as Grafana panels **and** as alert-rule queries. It has **two query paths**:
 
-Stack: TypeScript 5.5, React 18, Grafana SDK 11.5.x (`@grafana/data`/`ui`/`runtime`/`schema`), Webpack 5, Node.js ≥22, npm 10.9.2. Tests: Jest (unit) + Playwright (E2E) against a Docker Grafana.
+- **Frontend (dashboards):** React UI → `DataSource.query()` → `O11yApi` client → Grafana data-source proxy → VTEX Observability API.
+- **Backend (alert rules):** Grafana alerting engine → `pkg/` Go binary `QueryData` over plugin gRPC → VTEX Observability API directly.
+
+The backend exists because Grafana evaluates alert rules server-side, with no browser and no data-source proxy in the loop; a frontend-only data source cannot be selected in an alert rule at all. Dashboards still use the frontend path unchanged.
+
+Stack: TypeScript 5.5, React 18, Grafana SDK 11.5.x (`@grafana/data`/`ui`/`runtime`/`schema`), Webpack 5, Node.js ≥22, npm 10.9.2, plus Go 1.23 with `grafana-plugin-sdk-go` and Mage for the backend. Tests: Jest (unit) + `go test` (backend) + Playwright (E2E) against a Docker Grafana.
 
 Canonical reference for invariants, technical decisions, and data ownership: `PROJECT.md`.
 
@@ -23,6 +28,11 @@ npm run build
 # Spin up Grafana (Docker) with the plugin mounted from ./dist
 npm run server                    # uses default GRAFANA_VERSION=11.5.3
 GRAFANA_VERSION=11.3.0 npm run server
+
+# Backend (Go) — build the binaries Grafana loads from dist/
+go run github.com/magefile/mage@latest -v buildAll
+go run github.com/magefile/mage@latest -v build:linuxARM64   # just the one Docker needs
+go build ./... && go test ./pkg/...
 
 # Unit tests (Jest)
 npm run test                      # watch + only-changed
@@ -57,7 +67,9 @@ make download-zip                 # download release artifact via gh
 - Prettier: single quotes, semicolons, 2-space tabs, `printWidth: 120`, `trailingComma: 'es5'`.
 - ESLint enforces `@grafana/eslint-config` plus `deprecation/deprecation` (warn) on `src/**`.
 - Do **not** edit files under `.config/` (scaffolded by `@grafana/create-plugin`); extend via the project-root configs (`.eslintrc`, `.prettierrc.js`, `jest.config.js`, `tsconfig.json`).
-- All API calls go through `O11yApi` (which uses `getBackendSrv().fetch`). Never call VTEX endpoints directly from React.
+- All API calls **from React** go through `O11yApi` (which uses `getBackendSrv().fetch`). Never call VTEX
+  endpoints directly from React. The Go backend calls read-api directly on purpose — it has no browser
+  and no proxy available, and its credentials never reach the client.
 
 ## Testing
 
@@ -71,16 +83,32 @@ make download-zip                 # download release artifact via gh
 ## Architecture boundaries
 
 ```
-QueryEditor / ConfigEditor (React)
-        ↓
-   DataSource.query()        ← src/datasource.ts (DataFrame builders live here)
-        ↓
-   O11yApi (clients)         ← src/clients/o11yApi.ts (request shape + proxy paths)
-        ↓
-  Grafana Data Source Proxy  ← routes in src/plugin.json (local | remote)
-        ↓
-  VTEX Observability API
+DASHBOARDS                             ALERT RULES
+QueryEditor / ConfigEditor (React)     Grafana alerting engine
+        ↓                                      ↓ (plugin gRPC)
+   DataSource.query()                   pkg/plugin QueryData
+   ← src/datasource.ts                  ← pkg/plugin/datasource.go
+        ↓                                      ↓
+   O11yApi (clients)                    query builder + read-api client
+   ← src/clients/o11yApi.ts             ← pkg/plugin/query_builder.go, client.go
+        ↓                                      ↓
+  Grafana Data Source Proxy                    │
+  ← routes in src/plugin.json                  │
+        ↓                                      ↓
+             VTEX Observability API (read-api)
 ```
+
+The two paths must build the **same** read-api request for the same query model, and the
+same percentile from the same histogram. Two fixture files enforce that, each read by
+both test suites:
+
+| Fixture | Go test | Jest test |
+|---|---|---|
+| `tests/fixtures/query-contract.json` | `pkg/plugin/query_builder_test.go` | `tests/unit/queryContract.test.ts` |
+| `tests/fixtures/histogram-parity.json` | `pkg/plugin/histogram_test.go` | `tests/unit/histogramParity.test.ts` |
+
+Change one side without the other and CI fails. That is deliberate: silent drift would
+mean a panel and the alert built on it measure different things.
 
 - `O11yApi` knows nothing about React or Grafana panels — only `tenant`, proxy base URL, and request payloads.
 - DataFrame construction (logs, time series, latency tables, percentile graphs) lives **only** in `datasource.ts`. Plugin-side quantile math lives in `src/utils/histogramQuantiles.ts`.
