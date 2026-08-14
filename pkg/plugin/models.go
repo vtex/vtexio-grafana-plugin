@@ -103,7 +103,7 @@ type O11yQueryRequest struct {
 	Page     int           `json:"page"`
 	PageSize int           `json:"pageSize"`
 	Filters  []QueryFilter `json:"filters"`
-	Orders   []Order       `json:"orders"`
+	OrderBy  []Order       `json:"orders"`
 	Columns  []string      `json:"columns,omitempty"`
 	GroupBy  *GroupBy      `json:"group_by,omitempty"`
 	// Step buckets the time column server-side, in seconds. Sent only for alert

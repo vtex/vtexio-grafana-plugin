@@ -25,7 +25,7 @@ func BuildRequest(q QueryModel, from, to time.Time, step *int) O11yQueryRequest 
 		Page:     1,
 		PageSize: pageSizeFor(q),
 		Filters:  append(buildTimestampFilters(from, to), buildFetchFilters(q)...),
-		Orders:   buildOrders(q),
+		OrderBy:  buildOrderBy(q),
 		Step:     step,
 	}
 
@@ -109,9 +109,10 @@ func filterKey(f QueryFilter) string {
 	return fmt.Sprintf("%s:%s", f.Column, f.Operator)
 }
 
-// buildOrders mirrors the ordering the TypeScript client picks per metric. The charts
-// that draw a line over time read ascending; everything else reads newest-first.
-func buildOrders(q QueryModel) []Order {
+// buildOrderBy mirrors the ordering the TypeScript client picks per metric. The
+// charts that draw a line over time read ascending; everything else reads
+// newest-first.
+func buildOrderBy(q QueryModel) []Order {
 	if q.PredefinedMetric == MetricErrorRateByHandler || q.PredefinedMetric.isLatencyPercentile() {
 		return []Order{{Column: TimestampColumn, Dir: "asc"}}
 	}
