@@ -113,7 +113,7 @@ func (c *O11yApiClient) do(ctx context.Context, method, endpoint string, body io
 		return nil, fmt.Errorf("reading response from %s: %w", endpoint, err)
 	}
 
-	if err := statusError(res.StatusCode, raw); err != nil {
+	if err := statusError(res.StatusCode); err != nil {
 		return nil, err
 	}
 	return raw, nil

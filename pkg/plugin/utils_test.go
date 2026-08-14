@@ -59,26 +59,20 @@ func TestStatusError(t *testing.T) {
 	tests := []struct {
 		name        string
 		status      int
-		body        []byte
 		wantNil     bool
 		wantContain []string
-		wantExclude []string
 	}{
 		{name: "200 is not an error", status: http.StatusOK, wantNil: true},
 		{name: "204 is not an error", status: http.StatusNoContent, wantNil: true},
 		{
-			name:        "401 gets a canned auth message, not the body",
+			name:        "401 gets a canned auth message",
 			status:      http.StatusUnauthorized,
-			body:        []byte("some internal detail"),
 			wantContain: []string{"authentication failed", "App Key", "App Token"},
-			wantExclude: []string{"some internal detail"},
 		},
 		{
 			name:        "403 gets the same canned auth message",
 			status:      http.StatusForbidden,
-			body:        []byte("some internal detail"),
 			wantContain: []string{"authentication failed"},
-			wantExclude: []string{"some internal detail"},
 		},
 		{
 			name:        "429 gets a canned rate-limit message",
@@ -86,41 +80,28 @@ func TestStatusError(t *testing.T) {
 			wantContain: []string{"quota or rate limit"},
 		},
 		{
-			name:        "unmapped status echoes the response body",
+			name:        "unmapped status reports only the status, never the body",
 			status:      http.StatusInternalServerError,
-			body:        []byte("upstream exploded"),
-			wantContain: []string{"HTTP 500", "upstream exploded"},
-		},
-		{
-			name:        "unmapped status truncates an oversized body",
-			status:      http.StatusInternalServerError,
-			body:        []byte(strings.Repeat("x", maxStatusErrorBodyPreview+100)),
-			wantContain: []string{strings.Repeat("x", maxStatusErrorBodyPreview)},
-			wantExclude: []string{strings.Repeat("x", maxStatusErrorBodyPreview+1)},
+			wantContain: []string{"HTTP 500"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := statusError(tt.status, tt.body)
+			err := statusError(tt.status)
 			if tt.wantNil {
 				if err != nil {
-					t.Fatalf("statusError(%d, ...) = %v, want nil", tt.status, err)
+					t.Fatalf("statusError(%d) = %v, want nil", tt.status, err)
 				}
 				return
 			}
 			if err == nil {
-				t.Fatalf("statusError(%d, ...) = nil, want an error", tt.status)
+				t.Fatalf("statusError(%d) = nil, want an error", tt.status)
 			}
 			msg := err.Error()
 			for _, want := range tt.wantContain {
 				if !strings.Contains(msg, want) {
-					t.Errorf("statusError(%d, ...) = %q, want it to contain %q", tt.status, msg, want)
-				}
-			}
-			for _, exclude := range tt.wantExclude {
-				if strings.Contains(msg, exclude) {
-					t.Errorf("statusError(%d, ...) = %q, want it to NOT contain %q", tt.status, msg, exclude)
+					t.Errorf("statusError(%d) = %q, want it to contain %q", tt.status, msg, want)
 				}
 			}
 		})

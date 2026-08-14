@@ -18,11 +18,6 @@ const (
 // override is configured. %s is replaced with the URL-escaped tenant name.
 const productionBaseURLTemplate = "https://%s.vtexcommercebeta.com.br/api/extensions/observability"
 
-// maxStatusErrorBodyPreview bounds how much of an unexpected-status response body
-// gets echoed into an error message, so a pathological response can't produce an
-// unreadable (or enormous) error.
-const maxStatusErrorBodyPreview = 500
-
 const (
 	// maxHealthCheckBodySize bounds the reachability probe's response read: it only
 	// needs to observe the status code, never the body.
