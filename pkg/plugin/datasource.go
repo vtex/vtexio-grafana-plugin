@@ -162,17 +162,11 @@ const maxStepSeconds = 86400
 // "Save & test" reflects reality rather than just well-formed settings.
 func (d *Datasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if !d.client.IsConfigured() {
-		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: "App Key and App Token are required. Please configure their values first.",
-		}, nil
+		return healthError("App Key and App Token are required. Please configure their values first.")
 	}
 
 	if err := d.client.FetchLogsFields(ctx); err != nil {
-		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: fmt.Sprintf("Failed to connect to VTEX Observability Platform: %s", err),
-		}, nil
+		return healthError(fmt.Sprintf("Failed to connect to VTEX Observability Platform: %s", err))
 	}
 
 	return &backend.CheckHealthResult{
@@ -190,4 +184,13 @@ func errorResponse(status backend.Status, err error) backend.DataResponse {
 		ErrorSource: backend.ErrorSourceFromHTTPStatus(int(status)),
 		Status:      status,
 	}
+}
+
+// healthError builds the failing half of CheckHealth's result. The two failure cases
+// in CheckHealth built this same shape independently; only the message differs.
+func healthError(message string) (*backend.CheckHealthResult, error) {
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusError,
+		Message: message,
+	}, nil
 }
