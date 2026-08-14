@@ -90,15 +90,24 @@ func (d *Datasource) query(ctx context.Context, q backend.DataQuery, fromAlert b
 		return errorResponse(backend.StatusBadRequest, fmt.Errorf("reading query: %w", err))
 	}
 
-	if !d.client.IsConfigured() {
-		return errorResponse(backend.StatusUnauthorized,
-			errors.New("this data source is not fully configured: an App Key and App Token are required"))
+	// Each check below returns the same errorResponse(status, errors.New(message))
+	// shape, so they are listed declaratively here and applied in one place instead of
+	// repeating that shape once per check.
+	checks := []struct {
+		invalid bool
+		status  backend.Status
+		message string
+	}{
+		{!d.client.IsConfigured(), backend.StatusUnauthorized,
+			"this data source is not fully configured: an App Key and App Token are required"},
+		{model.AppName == "", backend.StatusBadRequest, "select an app before running this query"},
+		{model.Type == QueryTypeMetrics && model.PredefinedMetric == "", backend.StatusBadRequest,
+			"select a metric before running this query"},
 	}
-	if model.AppName == "" {
-		return errorResponse(backend.StatusBadRequest, errors.New("select an app before running this query"))
-	}
-	if model.Type == QueryTypeMetrics && model.PredefinedMetric == "" {
-		return errorResponse(backend.StatusBadRequest, errors.New("select a metric before running this query"))
+	for _, c := range checks {
+		if c.invalid {
+			return errorResponse(c.status, errors.New(c.message))
+		}
 	}
 
 	// Bucket alert queries to the evaluation interval. Without this the per-(minute x
