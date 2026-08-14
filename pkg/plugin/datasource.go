@@ -39,6 +39,11 @@ type instanceSettings struct {
 
 // NewDatasource builds a data source instance from its saved settings. The App Token
 // comes from decrypted secure settings and is never exposed to the frontend.
+//
+// The context parameter is unused here but not optional: this function is passed
+// directly to datasource.Manage in main.go as a datasource.InstanceFactoryFunc, whose
+// signature grafana-plugin-sdk-go defines with a context, so it must be present to
+// satisfy that type even though building an instance needs nothing from it.
 func NewDatasource(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var parsed instanceSettings
 	if len(settings.JSONData) > 0 {
