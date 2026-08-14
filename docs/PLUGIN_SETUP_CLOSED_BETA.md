@@ -4,27 +4,28 @@
 | --- | --- |
 | Created | Jan 23, 2026 |
 | Status | Closed Beta |
-| Updated | Feb 6, 2026 |
-| Current Version | 1.0.0 |
+| Updated | Aug 14, 2026 |
+| Current Version | 0.2.2-beta.0 |
 | Maintainer | VTEX Apps Team |
 
 ## Context
 
-The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distributed manually via a zip file. Because it is unsigned, specific installation steps are required for Grafana to recognize and load it correctly.
+The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distributed manually via a zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Releases are signed with a private signature scoped to VTEX's official Grafana root URLs (`https://grafana.com`, `https://vtexioapps.grafana.net`, `https://grafana-beta.vtex.com`, and `http://localhost:3000`). If your Grafana instance's configured root URL is not one of these, the signature will not validate and specific installation steps are required for Grafana to load the plugin anyway.
 
 ## Overview
 
 - **Plugin Name:** VTEX IO
 - **Plugin ID:** `vtexio-grafana-datasource`
 - **Type:** Datasource
-- **Version:** 0.2.0-beta.0
-- **Download Link:** VTEX IO Grafana Datasource Zip
+- **Version:** `0.2.2-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
+- **Grafana compatibility:** `>=10.4.0`
+- **Download Link:** [`vtexio-grafana-datasource-0.2.2-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.2.2-beta.0/vtexio-grafana-datasource-0.2.2-beta.0.zip)
 
 ## Manual Installation Guide
 
 ### Step 1: Download and Extract
 
-1. Download the plugin zip file from the provided link.
+1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtexio-grafana-datasource-0.2.2-beta.0.zip`).
 2. Locate your Grafana plugins directory based on your OS:
    - **Linux:** `/var/lib/grafana/plugins`
    - **macOS (Intel):** `/usr/local/var/lib/grafana/plugins`
@@ -33,13 +34,13 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
    - **Docker:** `/var/lib/grafana/plugins`
 3. Extract the zip file into this directory.
 
-> **Important:** Ensure the folder is named `vtexio-grafana-datasource`.
+> **Important:** The zip extracts to a version-suffixed folder (e.g. `vtexio-grafana-datasource-0.2.2-beta.0`). Rename it to `vtexio-grafana-datasource` so the plugin ID and folder name match.
 >
 > **Verification:** A `plugin.json` file must exist at the root of this folder.
 
 ### Step 2: Allow Unsigned Plugins
 
-Grafana blocks unsigned plugins by default; you must authorize it in your configuration:
+If your Grafana root URL matches one of the signed URLs listed above (`grafana.com`, `vtexioapps.grafana.net`, `grafana-beta.vtex.com`, or `localhost:3000`), the plugin's signature validates automatically and you can skip this step. For any other root URL, Grafana treats it as unsigned and blocks it by default; you must authorize it in your configuration:
 
 1. Open your `grafana.ini` (or `custom.ini` for Windows).
 2. Find the `[plugins]` section.
@@ -71,7 +72,7 @@ For Docker environments, installation is managed via volume mounting and environ
 
 ### Step 1: Extract Plugin Locally
 
-Unzip the plugin on your host machine. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
+Unzip the plugin on your host machine, then rename the extracted folder (originally `vtexio-grafana-datasource-<version>`) to `vtexio-grafana-datasource`. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
 
 ### Step 2: Run/Compose Example
 
