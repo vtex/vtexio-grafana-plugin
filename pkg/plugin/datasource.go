@@ -30,11 +30,11 @@ var (
 type instanceSettings struct {
 	AppKey string `json:"appKey"`
 	Tenant string `json:"tenant"`
-	// APIURL overrides the read-api base URL. Empty means production. It exists so the
+	// ApiUrl overrides the read-api base URL. Empty means production. It exists so the
 	// backend can be pointed at a locally running read-api during development — the
 	// frontend gets that from its `local` proxy route, and without this the backend
 	// would have no equivalent.
-	APIURL string `json:"apiUrl"`
+	ApiUrl string `json:"apiUrl"`
 }
 
 // NewDatasource builds a data source instance from its saved settings. The App Token
@@ -48,7 +48,7 @@ func NewDatasource(_ context.Context, settings backend.DataSourceInstanceSetting
 	}
 
 	return &Datasource{
-		client: NewClient(parsed.Tenant, parsed.AppKey, settings.DecryptedSecureJSONData["appToken"], parsed.APIURL),
+		client: NewClient(parsed.Tenant, parsed.AppKey, settings.DecryptedSecureJSONData["appToken"], parsed.ApiUrl),
 	}, nil
 }
 
