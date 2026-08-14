@@ -4,6 +4,12 @@
 
 Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There's a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you'd like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
 
+## Installation
+
+The VTEX IO Grafana Datasource plugin is currently in **Closed Beta** and distributed as a signed zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Since it isn't published on the official Grafana plugin catalog yet, it must be installed manually.
+
+For the full step-by-step guide — downloading the plugin, installing it on Linux/macOS/Windows/Docker, and configuring the datasource with your VTEX App Key and Token — see [`docs/PLUGIN_SETUP_CLOSED_BETA.md`](docs/PLUGIN_SETUP_CLOSED_BETA.md).
+
 ## Using the Plugin
 
 ### Querying Metrics
