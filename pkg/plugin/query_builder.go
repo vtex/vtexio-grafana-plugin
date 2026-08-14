@@ -20,19 +20,19 @@ const (
 //
 // step is sent only for alert evaluations; a nil step leaves read-api at stored
 // granularity, which is what dashboards get today.
-func BuildRequest(q QueryModel, from, to time.Time, step *int) O11yQueryRequest {
+func BuildRequest(query QueryModel, from, to time.Time, step *int) O11yQueryRequest {
 	req := O11yQueryRequest{
 		Page:     1,
-		PageSize: pageSizeFor(q),
-		Filters:  append(buildTimestampFilters(from, to), buildFetchFilters(q)...),
-		OrderBy:  buildOrderBy(q),
+		PageSize: pageSizeFor(query),
+		Filters:  append(buildTimestampFilters(from, to), buildFetchFilters(query)...),
+		OrderBy:  buildOrderBy(query),
 		Step:     step,
 	}
 
-	if q.Type == QueryTypeMetrics {
-		req.Columns = buildMetricsColumns(q.PredefinedMetric)
+	if query.Type == QueryTypeMetrics {
+		req.Columns = buildMetricsColumns(query.PredefinedMetric)
 	}
-	if gb := buildGroupBy(q.PredefinedMetric); gb != nil {
+	if gb := buildGroupBy(query.PredefinedMetric); gb != nil {
 		req.GroupBy = gb
 	}
 
@@ -42,16 +42,16 @@ func BuildRequest(q QueryModel, from, to time.Time, step *int) O11yQueryRequest 
 // pageSizeFor mirrors getPageSizeForMetricsQuery in datasource.ts: the percentile
 // charts need enough time buckets to draw a continuous line, but still respect a
 // user-tuned page size.
-func pageSizeFor(q QueryModel) int {
-	if q.Type == QueryTypeMetrics && q.PredefinedMetric.isLatencyPercentile() {
-		userPageSize := q.PageSize
+func pageSizeFor(query QueryModel) int {
+	if query.Type == QueryTypeMetrics && query.PredefinedMetric.isLatencyPercentile() {
+		userPageSize := query.PageSize
 		if userPageSize == 0 {
 			userPageSize = defaultPageSize
 		}
 		return min(latencyChartPageSize, max(userPageSize, latencyChartMinPageSize))
 	}
-	if q.PageSize > 0 {
-		return q.PageSize
+	if query.PageSize > 0 {
+		return query.PageSize
 	}
 	return defaultPageSize
 }
@@ -69,31 +69,31 @@ func buildTimestampFilters(from, to time.Time) []QueryFilter {
 //
 // Base filters win on conflict: they define what the predefined metric *is*, so a panel
 // filter must not be able to redefine it. A conflict is the same (column, operator).
-func buildFetchFilters(q QueryModel) []QueryFilter {
+func buildFetchFilters(query QueryModel) []QueryFilter {
 	base := []QueryFilter{
-		{Column: "app", Operator: "=", Type: "string", Value: q.AppName},
+		{Column: "app", Operator: "=", Type: "string", Value: query.AppName},
 	}
 
 	switch {
-	case q.PredefinedMetric == MetricRequestRate || q.PredefinedMetric == MetricErrorRateByHandler:
+	case query.PredefinedMetric == MetricRequestRate || query.PredefinedMetric == MetricErrorRateByHandler:
 		base = append(base, QueryFilter{
 			Column: "MetricName", Operator: "=", Type: "string", Value: "runtime_http_requests_total",
 		})
-	case q.PredefinedMetric.usesHistogram():
+	case query.PredefinedMetric.usesHistogram():
 		base = append(base,
 			QueryFilter{Column: "MetricName", Operator: "=", Type: "string", Value: "runtime_http_requests_duration_milliseconds"},
 			QueryFilter{Column: "MetricType", Operator: "=", Type: "string", Value: "histogram"},
 		)
 	}
 
-	merged := make([]QueryFilter, 0, len(base)+len(q.Filters))
+	merged := make([]QueryFilter, 0, len(base)+len(query.Filters))
 	merged = append(merged, base...)
 
 	seen := make(map[string]bool, len(base))
 	for _, f := range base {
 		seen[filterKey(f)] = true
 	}
-	for _, f := range q.Filters {
+	for _, f := range query.Filters {
 		key := filterKey(f)
 		if seen[key] {
 			continue
@@ -112,8 +112,8 @@ func filterKey(f QueryFilter) string {
 // buildOrderBy mirrors the ordering the TypeScript client picks per metric. The
 // charts that draw a line over time read ascending; everything else reads
 // newest-first.
-func buildOrderBy(q QueryModel) []Order {
-	if q.PredefinedMetric == MetricErrorRateByHandler || q.PredefinedMetric.isLatencyPercentile() {
+func buildOrderBy(query QueryModel) []Order {
+	if query.PredefinedMetric == MetricErrorRateByHandler || query.PredefinedMetric.isLatencyPercentile() {
 		return []Order{{Column: TimestampColumn, Dir: "asc"}}
 	}
 	return []Order{{Column: TimestampColumn, Dir: "desc"}}
