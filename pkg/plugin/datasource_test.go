@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -421,4 +422,153 @@ func fieldNames(frame *data.Frame) []string {
 		names = append(names, f.Name)
 	}
 	return names
+}
+
+// captureResourceResponse adapts a plain variable into a backend.CallResourceResponseSender.
+func captureResourceResponse(dst **backend.CallResourceResponse) backend.CallResourceResponseSender {
+	return backend.CallResourceResponseSenderFunc(func(resp *backend.CallResourceResponse) error {
+		*dst = resp
+		return nil
+	})
+}
+
+func TestCallResource(t *testing.T) {
+	t.Run("given the data source is not configured", func(t *testing.T) {
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			t.Fatal("read-api should never be reached when credentials are missing")
+		})
+		ds.client = NewClient("testtenant", "", "", "")
+
+		t.Run("when CallResource is called", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "local/apps", Method: http.MethodGet},
+				captureResourceResponse(&resp))
+
+			t.Run("it should not return a transport error", func(t *testing.T) {
+				require.NoError(t, err)
+			})
+			t.Run("it should respond with 401 and a clear message", func(t *testing.T) {
+				require.Equal(t, http.StatusUnauthorized, resp.Status)
+				require.Contains(t, string(resp.Body), "App Key and App Token")
+			})
+		})
+	})
+
+	t.Run("given an unrecognized resource path", func(t *testing.T) {
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			t.Fatal("read-api should never be reached for an unknown route")
+		})
+
+		t.Run("when CallResource is called", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "local/metrics/names", Method: http.MethodGet},
+				captureResourceResponse(&resp))
+
+			t.Run("it should not return a transport error", func(t *testing.T) {
+				require.NoError(t, err)
+			})
+			t.Run("it should respond with 404", func(t *testing.T) {
+				require.Equal(t, http.StatusNotFound, resp.Status)
+			})
+		})
+	})
+
+	t.Run("given a known resource path and a healthy read-api", func(t *testing.T) {
+		var gotMethod, gotPath, gotAppKey, gotAppToken string
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			gotMethod, gotPath = r.Method, r.URL.Path
+			gotAppKey = r.Header.Get(headerAppKey)
+			gotAppToken = r.Header.Get(headerAppToken)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`["vtex.checkout-graphql","vtex.orders-graphql"]`))
+		})
+
+		t.Run("when CallResource is called for local/apps", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "local/apps", Method: http.MethodGet},
+				captureResourceResponse(&resp))
+			require.NoError(t, err)
+
+			t.Run("it should GET the tenant's apps endpoint", func(t *testing.T) {
+				require.Equal(t, http.MethodGet, gotMethod)
+				require.Equal(t, "/testtenant/apps", gotPath)
+			})
+			t.Run("it should authenticate with the App Key and App Token headers", func(t *testing.T) {
+				require.Equal(t, testAppKey, gotAppKey)
+				require.Equal(t, testAppToken, gotAppToken)
+			})
+			t.Run("it should relay read-api's status code", func(t *testing.T) {
+				require.Equal(t, http.StatusOK, resp.Status)
+			})
+			t.Run("it should relay read-api's response body unchanged", func(t *testing.T) {
+				require.JSONEq(t, `["vtex.checkout-graphql","vtex.orders-graphql"]`, string(resp.Body))
+			})
+		})
+
+		t.Run("when CallResource is called for remote/apps", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "remote/apps", Method: http.MethodGet},
+				captureResourceResponse(&resp))
+			require.NoError(t, err)
+
+			t.Run("it should resolve to the same endpoint as the local route", func(t *testing.T) {
+				require.Equal(t, "/testtenant/apps", gotPath)
+				require.Equal(t, http.StatusOK, resp.Status)
+			})
+		})
+	})
+
+	t.Run("given a POST resource path carrying a query body", func(t *testing.T) {
+		var gotMethod, gotPath string
+		var gotBody []byte
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			gotMethod, gotPath = r.Method, r.URL.Path
+			gotBody, _ = io.ReadAll(r.Body)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"fields":[]}`))
+		})
+
+		t.Run("when CallResource is called for remote/metrics/query", func(t *testing.T) {
+			payload := []byte(`{"page":1,"pageSize":100,"filters":[]}`)
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "remote/metrics/query", Method: http.MethodPost, Body: payload},
+				captureResourceResponse(&resp))
+			require.NoError(t, err)
+
+			t.Run("it should POST to the tenant's metrics query endpoint", func(t *testing.T) {
+				require.Equal(t, http.MethodPost, gotMethod)
+				require.Equal(t, "/metrics/testtenant/query", gotPath)
+			})
+			t.Run("it should forward the frontend's request body unchanged", func(t *testing.T) {
+				require.Equal(t, payload, gotBody)
+			})
+		})
+	})
+
+	t.Run("given read-api rejects the request", func(t *testing.T) {
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"invalid app key"}`))
+		})
+
+		t.Run("when CallResource is called", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{Path: "local/apps", Method: http.MethodGet},
+				captureResourceResponse(&resp))
+			require.NoError(t, err)
+
+			t.Run("it should relay the exact upstream status, not a canned one", func(t *testing.T) {
+				require.Equal(t, http.StatusUnauthorized, resp.Status)
+			})
+			t.Run("it should relay the exact upstream body", func(t *testing.T) {
+				require.JSONEq(t, `{"error":"invalid app key"}`, string(resp.Body))
+			})
+		})
+	})
 }
