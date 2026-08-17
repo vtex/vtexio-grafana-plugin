@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -205,6 +206,13 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			Status: http.StatusNotFound,
 			Body:   []byte(fmt.Sprintf("unknown resource path %q", req.Path)),
 		})
+	}
+
+	// req.Path carries only the path; req.URL carries the full forwarded URL. The GET
+	// routes (apps, logs/fields, metrics/fields) take fromTime/toTime as query params,
+	// so those must be forwarded too or read-api rejects every one of them.
+	if reqURL, err := url.Parse(req.URL); err == nil && reqURL.RawQuery != "" {
+		endpoint += "?" + reqURL.RawQuery
 	}
 
 	status, body, err := d.client.Proxy(ctx, req.Method, endpoint, req.Body)

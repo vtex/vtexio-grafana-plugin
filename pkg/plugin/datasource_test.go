@@ -522,6 +522,34 @@ func TestCallResource(t *testing.T) {
 		})
 	})
 
+	t.Run("given a GET resource path carrying query parameters", func(t *testing.T) {
+		var gotRawQuery string
+		ds, _ := newTestDatasource(t, func(w http.ResponseWriter, r *http.Request) {
+			gotRawQuery = r.URL.RawQuery
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`["vtex.checkout-graphql"]`))
+		})
+
+		t.Run("when CallResource is called for local/apps with fromTime and toTime", func(t *testing.T) {
+			var resp *backend.CallResourceResponse
+			err := ds.CallResource(context.Background(),
+				&backend.CallResourceRequest{
+					Path:   "local/apps",
+					Method: http.MethodGet,
+					URL:    "local/apps?fromTime=1700000000&toTime=1700003600",
+				},
+				captureResourceResponse(&resp))
+			require.NoError(t, err)
+
+			t.Run("it should forward the query string to read-api", func(t *testing.T) {
+				require.Equal(t, "fromTime=1700000000&toTime=1700003600", gotRawQuery)
+			})
+			t.Run("it should relay read-api's status code", func(t *testing.T) {
+				require.Equal(t, http.StatusOK, resp.Status)
+			})
+		})
+	})
+
 	t.Run("given a POST resource path carrying a query body", func(t *testing.T) {
 		var gotMethod, gotPath string
 		var gotBody []byte
