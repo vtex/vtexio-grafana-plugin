@@ -124,8 +124,16 @@ func buildGroupBy(m PredefinedMetric) *GroupBy {
 	switch {
 	case m == MetricErrorRateByHandler:
 		return &GroupBy{Columns: []string{TimestampColumn, "app", "handler"}}
-	case m == MetricLatencyStatsByAccountAndHandler || m.isLatencyPercentile():
+	case m == MetricLatencyStatsByAccountAndHandler:
 		return &GroupBy{Columns: []string{TimestampColumn, "account", "handler"}}
+	case m.isLatencyPercentile():
+		// Per-handler percentile charts merge every account's histogram into one
+		// series per handler (see latencyPercentileFrame) — account never survives
+		// into the output. Grouping by it here anyway means one row per (account,
+		// handler) pair instead of one per handler, which for an app reporting under
+		// many accounts can multiply the row count enough that a single time bucket
+		// exhausts the page size, starving every later bucket in the requested range.
+		return &GroupBy{Columns: []string{TimestampColumn, "handler"}}
 	case m == MetricLatencyStatsPerAccount:
 		return &GroupBy{Columns: []string{TimestampColumn, "account"}}
 	}
@@ -151,11 +159,22 @@ func buildMetricsColumns(m PredefinedMetric) []string {
 			"if(total_requests = 0, 0, (error_count / total_requests) * 100) AS error_rate",
 		}
 
-	case MetricLatencyStatsByAccountAndHandler, MetricLatencyP50PerHandler,
-		MetricLatencyP90PerHandler, MetricLatencyP99PerHandler:
+	case MetricLatencyStatsByAccountAndHandler:
 		return []string{
 			TimestampColumn,
 			"account",
+			"ifNull(Attributes['handler'], 'unknown') as handler",
+			"anyMerge(ExplicitBounds) AS ExplicitBounds",
+			"sumForEachMerge(BucketCounts) AS BucketCounts",
+		}
+
+	case MetricLatencyP50PerHandler, MetricLatencyP90PerHandler, MetricLatencyP99PerHandler:
+		// No "account" here: these merge across every account into one series per
+		// handler (see latencyPercentileFrame), and it isn't part of buildGroupBy's
+		// grouping for this case either — selecting it anyway would be a
+		// non-aggregated column outside the GROUP BY.
+		return []string{
+			TimestampColumn,
 			"ifNull(Attributes['handler'], 'unknown') as handler",
 			"anyMerge(ExplicitBounds) AS ExplicitBounds",
 			"sumForEachMerge(BucketCounts) AS BucketCounts",
