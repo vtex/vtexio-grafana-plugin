@@ -34,9 +34,7 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
    - **Docker:** `/var/lib/grafana/plugins`
 3. Extract the zip file into this directory.
 
-> **Important:** The zip extracts to a version-suffixed folder (e.g. `vtexio-grafana-datasource-0.3.0-beta.0`). Rename it to `vtexio-grafana-datasource` so the plugin ID and folder name match.
->
-> **Verification:** A `plugin.json` file must exist at the root of this folder.
+> **Verification:** The zip extracts to `vtexio-grafana-datasource/`. A `plugin.json` file must exist at the root of this folder.
 
 ### Step 2: Allow Unsigned Plugins
 
@@ -72,7 +70,7 @@ For Docker environments, installation is managed via volume mounting and environ
 
 ### Step 1: Extract Plugin Locally
 
-Unzip the plugin on your host machine, then rename the extracted folder (originally `vtexio-grafana-datasource-<version>`) to `vtexio-grafana-datasource`. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
+Unzip the plugin on your host machine. The archive extracts to `vtexio-grafana-datasource/`. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
 
 ### Step 2: Run/Compose Example
 
