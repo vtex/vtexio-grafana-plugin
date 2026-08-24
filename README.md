@@ -14,7 +14,7 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
 
 The VTEX IO Grafana Datasource plugin is currently in **Closed Beta** and distributed as a signed zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Since it isn't published on the official Grafana plugin catalog yet, it must be installed manually.
 
-For the full step-by-step guide — downloading the plugin, installing it on Linux/macOS/Windows/Docker, and configuring the datasource with your VTEX App Key and Token — see [`docs/PLUGIN_SETUP_CLOSED_BETA.md`](docs/PLUGIN_SETUP_CLOSED_BETA.md).
+For the full step-by-step guide — downloading the plugin, installing it on Linux/macOS/Windows/Docker, and configuring the datasource with your VTEX App Key and Token — see [`docs/PLUGIN_SETUP_CLOSED_BETA.md`](https://github.com/vtex/vtexio-grafana-plugin/blob/main/docs/PLUGIN_SETUP_CLOSED_BETA.md).
 
 Once the plugin is listed in the Grafana catalog:
 
