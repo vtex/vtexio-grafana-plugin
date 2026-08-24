@@ -11,7 +11,7 @@ import (
 
 // newTestClient points an O11yApiClient at an httptest server standing in for read-api.
 func newTestClient(apiURL string) *O11yApiClient {
-	return NewClient("acmestore", "test-app-key", "test-app-token", apiURL)
+	return NewClient("acmestore", "test-app-key", "test-app-token", apiURL) // #nosec G101 -- fake fixture
 }
 
 func TestIsConfigured(t *testing.T) {
