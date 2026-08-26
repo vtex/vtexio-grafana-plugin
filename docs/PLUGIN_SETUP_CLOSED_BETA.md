@@ -5,7 +5,7 @@
 | Created | Jan 23, 2026 |
 | Status | Closed Beta |
 | Updated | Aug 14, 2026 |
-| Current Version | 0.3.0-beta.0 |
+| Current Version | 0.3.1-beta.0 |
 | Maintainer | VTEX Apps Team |
 
 ## Context
@@ -17,15 +17,15 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
 - **Plugin Name:** VTEX IO
 - **Plugin ID:** `vtexio-grafana-datasource`
 - **Type:** Datasource
-- **Version:** `0.3.0-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
+- **Version:** `0.3.1-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
 - **Grafana compatibility:** `>=10.4.0`
-- **Download Link:** [`vtexio-grafana-datasource-0.3.0-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.0-beta.0/vtexio-grafana-datasource-0.3.0-beta.0.zip)
+- **Download Link:** [`vtexio-grafana-datasource-0.3.1-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.1-beta.0/vtexio-grafana-datasource-0.3.1-beta.0.zip)
 
 ## Manual Installation Guide
 
 ### Step 1: Download and Extract
 
-1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtexio-grafana-datasource-0.3.0-beta.0.zip`).
+1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtexio-grafana-datasource-0.3.1-beta.0.zip`).
 2. Locate your Grafana plugins directory based on your OS:
    - **Linux:** `/var/lib/grafana/plugins`
    - **macOS (Intel):** `/usr/local/var/lib/grafana/plugins`
@@ -34,7 +34,7 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
    - **Docker:** `/var/lib/grafana/plugins`
 3. Extract the zip file into this directory.
 
-> **Important:** The zip extracts to a version-suffixed folder (e.g. `vtexio-grafana-datasource-0.3.0-beta.0`). Rename it to `vtexio-grafana-datasource` so the plugin ID and folder name match.
+> **Important:** The zip extracts to a version-suffixed folder (e.g. `vtexio-grafana-datasource-0.3.1-beta.0`). Rename it to `vtexio-grafana-datasource` so the plugin ID and folder name match.
 >
 > **Verification:** A `plugin.json` file must exist at the root of this folder.
 
