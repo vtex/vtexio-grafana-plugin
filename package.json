@@ -1,6 +1,6 @@
 {
   "name": "vtexio-grafana-plugin",
-  "version": "0.3.0-beta.0",
+  "version": "0.3.1-beta.0",
   "scripts": {
     "build": "npm run build:backend && npm run build:frontend --",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
