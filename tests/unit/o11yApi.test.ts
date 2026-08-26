@@ -276,11 +276,14 @@ describe('O11yApiClient - buildMetricsColumns', () => {
     expect(columns).toHaveLength(4);
   });
 
-  it('should return same latency stats columns as BY_ACCOUNT_AND_HANDLER for LATENCY_P50_PER_HANDLER, P90, P99', () => {
+  it('should return handler-only latency columns (no account) for LATENCY_P50_PER_HANDLER, P90, P99', () => {
+    // These charts merge every account's histogram into one series per handler
+    // (createLatencyPercentileByHandlerGraphDataFrame never reads 'account'), so
+    // selecting it here — unlike BY_ACCOUNT_AND_HANDLER, which genuinely needs it —
+    // would just be a non-aggregated column outside the query's group_by.
     const client = createMockClient();
     const expected = [
       'TimestampTime',
-      'account',
       "ifNull(Attributes['handler'], 'unknown') as handler",
       'anyMerge(ExplicitBounds) AS ExplicitBounds',
       'sumForEachMerge(BucketCounts) AS BucketCounts',
@@ -292,6 +295,7 @@ describe('O11yApiClient - buildMetricsColumns', () => {
     ]) {
       const columns = (client as any).buildMetricsColumns(predefinedMetric);
       expect(columns).toEqual(expected);
+      expect(columns).not.toContain('account');
     }
   });
 });

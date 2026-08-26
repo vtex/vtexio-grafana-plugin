@@ -194,7 +194,10 @@ abstract class O11yApiClient implements O11yApi {
       ];
     }
 
-    // Latency P50/P90/P99 per handler (chart): same columns as latency stats by account and handler
+    // Latency P50/P90/P99 per handler (chart): no 'account' here — these merge every
+    // account's histogram into one series per handler, and account never survives
+    // into the chart (see the group_by comment in fetchUsingPost for why selecting
+    // it anyway is actively harmful, not just unused).
     if (
       predefinedMetric === PredefinedMetricType.LATENCY_P50_PER_HANDLER ||
       predefinedMetric === PredefinedMetricType.LATENCY_P90_PER_HANDLER ||
@@ -202,7 +205,6 @@ abstract class O11yApiClient implements O11yApi {
     ) {
       return [
         'TimestampTime',
-        'account',
         "ifNull(Attributes['handler'], 'unknown') as handler",
         'anyMerge(ExplicitBounds) AS ExplicitBounds',
         'sumForEachMerge(BucketCounts) AS BucketCounts',
@@ -271,8 +273,18 @@ abstract class O11yApiClient implements O11yApi {
     if (isErrorRateByHandler) {
       requestPayload.group_by = { columns: [O11Y_API_TIMESTAMP_COLUMN, 'app', 'handler'] };
     }
-    if (isLatencyStats || isLatencyPercentileByHandler) {
+    if (isLatencyStats) {
       requestPayload.group_by = { columns: [O11Y_API_TIMESTAMP_COLUMN, 'account', 'handler'] };
+    }
+    if (isLatencyPercentileByHandler) {
+      // No 'account' here: these merge every account's histogram into one series per
+      // handler (see createLatencyPercentileByHandlerGraphDataFrame in datasource.ts),
+      // and account never survives into the chart. Grouping by it anyway means one
+      // row per (account, handler) pair instead of one per handler, which for an app
+      // reporting under many accounts can multiply the row count enough that a
+      // single time bucket exhausts the page size, starving every later bucket in
+      // the requested range.
+      requestPayload.group_by = { columns: [O11Y_API_TIMESTAMP_COLUMN, 'handler'] };
     }
     if (isLatencyStatsPerAccount) {
       requestPayload.group_by = { columns: [O11Y_API_TIMESTAMP_COLUMN, 'account'] };
