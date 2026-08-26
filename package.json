@@ -63,7 +63,7 @@
     "jest-environment-jsdom": "^29.5.0",
     "prettier": "^2.8.7",
     "replace-in-file-webpack-plugin": "^1.0.6",
-    "sass": "1.63.2",
+    "sass": "1.102.0",
     "sass-loader": "13.3.1",
     "semver": "^7.6.3",
     "style-loader": "3.3.3",
@@ -83,9 +83,9 @@
   "dependencies": {
     "@emotion/css": "11.10.6",
     "@grafana/data": "^11.5.3",
-    "@grafana/runtime": "^11.5.3",
+    "@grafana/runtime": "^13.1.2",
     "@grafana/schema": "^11.5.3",
-    "@grafana/ui": "^11.5.3",
+    "@grafana/ui": "^13.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "string-format": "^2.0.0"
