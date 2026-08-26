@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -15,7 +17,11 @@ import (
 // alerting engine has something to call: alert rules are evaluated server-side, where
 // the browser-based frontend query path is unavailable.
 //
-// Dashboard queries still run through the TypeScript path and the data source proxy.
+// Dashboard queries still run through the TypeScript path, but — despite the plugin
+// still declaring `routes` in plugin.json for backwards documentation — no longer
+// through Grafana's own data source proxy: once a plugin has a backend, Grafana routes
+// every /resources/* call to CallResource below instead of honoring `routes` itself,
+// so this plugin has to do that proxying.
 type Datasource struct {
 	client *O11yApiClient
 }
@@ -23,6 +29,7 @@ type Datasource struct {
 var (
 	_ backend.QueryDataHandler      = (*Datasource)(nil)
 	_ backend.CheckHealthHandler    = (*Datasource)(nil)
+	_ backend.CallResourceHandler   = (*Datasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
 )
 
@@ -173,6 +180,54 @@ func (d *Datasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequ
 		Status:  backend.HealthStatusOk,
 		Message: "Successfully connected to VTEX Observability Platform.",
 	}, nil
+}
+
+// CallResource proxies the app-name/field-autocomplete and browser-side dashboard
+// query routes the frontend's o11yApi.ts client calls directly against
+// plugin.json's declared `routes` paths (e.g. "local/apps", "remote/metrics/query").
+// Grafana only honors those routes itself when a plugin has no backend; since this one
+// does, every /resources/* call arrives here instead, and this plugin must forward it
+// to read-api itself or those routes 500 with "an error occurred within the plugin".
+//
+// This is a transparent pass-through, not a typed query: whatever body the frontend
+// already built is forwarded as-is, and the response — status included — is relayed
+// back unchanged, matching what Grafana's own reverse proxy used to do.
+func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if !d.client.IsConfigured() {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusUnauthorized,
+			Body:   []byte("this data source is not fully configured: an App Key and App Token are required"),
+		})
+	}
+
+	endpoint, ok := d.client.resourceEndpoint(req.Path)
+	if !ok {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusNotFound,
+			Body:   []byte(fmt.Sprintf("unknown resource path %q", req.Path)),
+		})
+	}
+
+	// req.Path carries only the path; req.URL carries the full forwarded URL. The GET
+	// routes (apps, logs/fields, metrics/fields) take fromTime/toTime as query params,
+	// so those must be forwarded too or read-api rejects every one of them.
+	if reqURL, err := url.Parse(req.URL); err == nil && reqURL.RawQuery != "" {
+		endpoint += "?" + reqURL.RawQuery
+	}
+
+	status, body, err := d.client.Proxy(ctx, req.Method, endpoint, req.Body)
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusBadGateway,
+			Body:   []byte(err.Error()),
+		})
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  status,
+		Headers: map[string][]string{"Content-Type": {"application/json"}},
+		Body:    body,
+	})
 }
 
 // errorResponse attaches a status and an error source so Grafana attributes the
