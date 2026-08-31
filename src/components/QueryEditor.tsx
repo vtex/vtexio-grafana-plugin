@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState, useEffect, useMemo } from 'react';
+import React, { ChangeEvent, useMemo, useCallback, useRef } from 'react';
 import semver from 'semver';
 import { Combobox, InlineField, Input, Stack, Tag, Alert } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
@@ -68,9 +68,6 @@ function parseTimeRange(currentTimeFrom: any, currentTimeTo: any): { fromTime?: 
 }
 
 export function QueryEditor({ query, onChange, onRunQuery, datasource, data }: Props) {
-  const [appNameSuggestions, setAppNameSuggestions] = useState<Array<{ label: string; value: string }>>([]);
-  const [loadingAppNames, setLoadingAppNames] = useState(false);
-  
   // Extract error for the current query
   const queryError = data?.errors?.find((error) => error.refId === query.refId);
 
@@ -130,64 +127,63 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource, data }: P
     onRunQuery();
   };
 
-  // Fetch app name suggestions when query type changes or time range changes
-  useEffect(() => {
-    if (queryType === QueryType.metrics || queryType === QueryType.logs) {
-      setLoadingAppNames(true);
-
-      // Get dashboard time range from URL parameters (Grafana stores time range in URL)
-      const { fromTime, toTime } = parseTimeRange(currentTimeFrom, currentTimeTo);
-      
-      // Fetch apps for both logs and metrics
-      datasource
-        .getApps(fromTime, toTime)
-        .then((apps) => {
-          // Get the appropriate apps based on query type
-          const appNames = queryType === QueryType.logs ? apps.LogsApps : apps.MetricsApps;
-
-          // Sort by version descending so the most recent appears first.
-          // App names follow the pattern "vendor.name@major.minor.patch".
-          const sorted = [...appNames].sort((a, b) => {
-            const vA = semver.coerce(a.split('@')[1]);
-            const vB = semver.coerce(b.split('@')[1]);
-            if (!vA || !vB) {
-              return 0;
-            }
-            return semver.rcompare(vA, vB);
-          });
-
-          const appSuggestions = sorted.map((name) => ({
-            label: name,
-            value: name,
-          }));
-          
-          // Ensure current appName is in suggestions if it exists and not already present
-          if (query.appName && !appSuggestions.some(s => s.value === query.appName)) {
-            appSuggestions.unshift({ label: query.appName, value: query.appName });
-          }
-          
-          setAppNameSuggestions(appSuggestions);
-        })
-        .catch((error) => {
-          console.error('Error fetching app names:', error);
-          // If there's an error but we have a current appName, at least show that
-          if (query.appName) {
-            setAppNameSuggestions([{ label: query.appName, value: query.appName }]);
-          } else {
-            setAppNameSuggestions([]);
-          }
-        })
-        .finally(() => {
-          setLoadingAppNames(false);
-        });
-    } else {
-      // Reset suggestions when not in logs or metrics mode
-      setAppNameSuggestions([]);
-    }
-  }, [queryType, datasource, currentTimeFrom, currentTimeTo, query.appName]);
-
   const { pageSize = DEFAULT_QUERY.pageSize, predefinedMetric, appName } = query;
   const filters = query.filters || [];
+
+  // The app list, fetched once per (data source, time range, query type) and kept
+  // as a stable promise. It runs eagerly (the fetch starts as this memo is
+  // created), and the Combobox loader below awaits it.
+  const appOptions = useMemo<Promise<Array<{ label: string; value: string }>>>(() => {
+    if (queryType !== QueryType.metrics && queryType !== QueryType.logs) {
+      return Promise.resolve([]);
+    }
+    // Grafana stores the dashboard time range in the URL.
+    const { fromTime, toTime } = parseTimeRange(currentTimeFrom, currentTimeTo);
+    return datasource
+      .getApps(fromTime, toTime)
+      .then((apps) => {
+        const appNames = queryType === QueryType.logs ? apps.LogsApps : apps.MetricsApps;
+        // Sort by version descending so the most recent appears first.
+        // App names follow the pattern "vendor.name@major.minor.patch".
+        const sorted = [...appNames].sort((a, b) => {
+          const vA = semver.coerce(a.split('@')[1]);
+          const vB = semver.coerce(b.split('@')[1]);
+          if (!vA || !vB) {
+            return 0;
+          }
+          return semver.rcompare(vA, vB);
+        });
+        const options = sorted.map((name) => ({ label: name, value: name }));
+        // Keep the currently-selected app selectable even if it is no longer returned.
+        if (query.appName && !options.some((o) => o.value === query.appName)) {
+          options.unshift({ label: query.appName, value: query.appName });
+        }
+        return options;
+      })
+      .catch((error) => {
+        console.error('Error fetching app names:', error);
+        return query.appName ? [{ label: query.appName, value: query.appName }] : [];
+      });
+  }, [queryType, datasource, currentTimeFrom, currentTimeTo, query.appName]);
+
+  // App-name options loader for the Combobox below.
+  //
+  // Combobox only re-derives a plain-array `options` prop at mount, so an array
+  // that is empty until the fetch resolves leaves the field on "No options found"
+  // until the user types. A function uses Combobox's async path, which re-loads on
+  // every menu open — but Combobox wraps it in useLatestAsyncCall and discards a
+  // resolved result if the loader's identity changed mid-lookup, a race an
+  // inline/changing function loses in the frequently-re-rendering alert-rule
+  // editor. So the loader keeps a constant identity (reading the latest fetch
+  // through a ref) and AWAITS that fetch rather than reading a snapshot — which
+  // also means opening the field before the fetch finishes still resolves the
+  // apps once they arrive, instead of showing an empty menu until reopened.
+  const appOptionsRef = useRef(appOptions);
+  appOptionsRef.current = appOptions;
+  const loadAppNameOptions = useCallback(async (inputValue: string) => {
+    const options = await appOptionsRef.current;
+    return options.filter((option) => option.label.toLowerCase().includes(inputValue.toLowerCase()));
+  }, []);
 
   const queryTypeOptions = useMemo(
     () => [
@@ -240,17 +236,15 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource, data }: P
               <Combobox
                 id="query-editor-app-name"
                 aria-label="App name"
-                options={(inputValue: string) => {
-                  const filtered = appNameSuggestions.filter(option =>
-                    option.label.toLowerCase().includes(inputValue.toLowerCase())
-                  );
-                  return Promise.resolve(filtered);
-                }}
+                // Async loader (see loadAppNameOptions above), not a plain array: a plain
+                // array never populates because Combobox only seeds it at mount, before the
+                // apps have loaded. Combobox shows its own loading spinner while the loader
+                // is in flight.
+                options={loadAppNameOptions}
                 value={appName}
                 onChange={onAppNameChange}
-                placeholder={loadingAppNames ? 'Loading app names...' : 'Select app name'}
+                placeholder="Select app name"
                 isClearable={true}
-                loading={loadingAppNames}
                 width={24}
               />
             </InlineField>
