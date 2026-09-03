@@ -95,7 +95,6 @@
     "@grafana/plugin-e2e": {
       "@grafana/e2e-selectors": "13.2.0-30866084945"
     },
-    "browserslist": "4.28.7",
     "websocket-driver": "0.7.5",
     "brace-expansion@1": "1.1.18",
     "brace-expansion@2": "2.1.4",

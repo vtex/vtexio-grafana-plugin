@@ -8,10 +8,6 @@ All notable changes to the VTEX IO Grafana Datasource (`vtex-grafana-datasource`
 
 - Plugin ID renamed from `vtexio-grafana-datasource` to `vtex-grafana-datasource` (Grafana Cloud org slug `vtex`). Backend executable is now `gpx_vtex_grafana_datasource`. Existing closed-beta installs must remove the old plugin folder and re-add the data source; Grafana does not migrate the ID automatically.
 
-### Fixed
-
-- Pin `google.golang.org/grpc` to `v1.83.1` (CVE-2026-84304) and `browserslist` to `4.28.7` (CVE-2026-73088, CVE-2026-73089) so the Grafana plugin-validator OSV scan stays clean.
-
 ## 0.3.0-beta.0 (2026-08-14)
 
 ### Added
