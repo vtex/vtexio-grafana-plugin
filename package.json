@@ -4,7 +4,7 @@
   "scripts": {
     "build": "npm run build:backend && npm run build:frontend --",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
-    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource-$npm_package_version/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource-$npm_package_version && rm -rf vtexio-grafana-datasource-$npm_package_version",
+    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource && rm -rf vtexio-grafana-datasource",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
@@ -94,6 +94,15 @@
   "overrides": {
     "@grafana/plugin-e2e": {
       "@grafana/e2e-selectors": "13.2.0-30866084945"
-    }
+    },
+    "websocket-driver": "0.7.5",
+    "brace-expansion@1": "1.1.18",
+    "brace-expansion@2": "2.1.4",
+    "fast-uri": "3.1.6",
+    "js-yaml@3": "3.15.1",
+    "js-yaml@4": "4.3.1",
+    "minimatch@9": "9.0.9",
+    "nanoid": "3.3.18",
+    "postcss": "8.5.26"
   }
 }

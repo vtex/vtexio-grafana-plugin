@@ -4,11 +4,28 @@
 
 Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There's a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you'd like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
 
+## Requirements
+
+- Grafana >= 10.4.0
+- A VTEX account
+- The VTEX IO apps you want to monitor must be running on builder-node 7.x
+
 ## Installation
 
 The VTEX IO Grafana Datasource plugin is currently in **Closed Beta** and distributed as a signed zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Since it isn't published on the official Grafana plugin catalog yet, it must be installed manually.
 
-For the full step-by-step guide — downloading the plugin, installing it on Linux/macOS/Windows/Docker, and configuring the datasource with your VTEX App Key and Token — see [`docs/PLUGIN_SETUP_CLOSED_BETA.md`](docs/PLUGIN_SETUP_CLOSED_BETA.md).
+For the full step-by-step guide — downloading the plugin, installing it on Linux/macOS/Windows/Docker, and configuring the datasource with your VTEX App Key and Token — see [`docs/PLUGIN_SETUP_CLOSED_BETA.md`](https://github.com/vtex/vtexio-grafana-plugin/blob/main/docs/PLUGIN_SETUP_CLOSED_BETA.md).
+
+Once the plugin is listed in the Grafana catalog:
+
+1. In Grafana, go to the **Plugins** section and search for **VTEX IO**.
+2. Click **Install plugin**.
+3. With the plugin installed, click **Add new data source**.
+4. Fill in the fields with your VTEX account data:
+   - **App Key**: your VTEX API app key
+   - **Account**: your VTEX account name (lowercase letters and numbers only)
+   - **App Token**: your VTEX API app token
+5. Click **Save & test**.
 
 ## Using the Plugin
 
@@ -40,3 +57,7 @@ All metrics use the `runtime_http_requests_total` metric from the VTEX Observabi
 1. **Select Query Type**: Choose "Logs" from the query type dropdown
 2. **Select App Name**: Choose the VTEX IO app whose logs you want to view
 3. **Configure Page Size**: Adjust the number of log entries to retrieve (default: 100)
+
+## Contributing & Support
+
+Found a bug or want to request a feature? Open a support ticket at [supporticket.vtex.com/support](https://supporticket.vtex.com/support).

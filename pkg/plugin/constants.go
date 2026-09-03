@@ -8,7 +8,7 @@ const requestTimeout = 30 * time.Second
 const (
 	headerAppKey = "X-VTEX-API-AppKey"
 	//nolint:gosec // header name, not a credential
-	headerAppToken = "X-VTEX-API-AppToken"
+	headerAppToken = "X-VTEX-API-AppToken" // #nosec G101 -- HTTP header name, not a secret
 	// headerFromAlert tells read-api this query backs an alert evaluation, so it can
 	// account for scheduled traffic separately from interactive dashboard use.
 	headerFromAlert = "X-Grafana-From-Alert"

@@ -19,7 +19,7 @@ import (
 // "never leaked" assertions are meaningful.
 const (
 	testAppKey   = "vtexappkey-testtenant-AAAAAA"
-	testAppToken = "TESTTOKENSHOULDNEVERAPPEARINOUTPUT"
+	testAppToken = "TESTTOKENSHOULDNEVERAPPEARINOUTPUT" // #nosec G101 -- fake fixture, never a real credential
 )
 
 // newTestDatasource points a Datasource at a stub read-api.

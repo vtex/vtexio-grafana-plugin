@@ -21,11 +21,25 @@
       "VTEX IO"
     ],
     "logos": {
-      "small": "img/logo-vtex.png",
-      "large": "img/logo-vtex.png"
+      "small": "img/logo-vtex-small.png",
+      "large": "img/logo-vtex-large.png"
     },
-    "links": [],
-    "screenshots": [],
+    "links": [
+      {
+        "name": "Support",
+        "url": "https://supporticket.vtex.com/support"
+      },
+      {
+        "name": "license",
+        "url": "https://github.com/vtex/vtexio-grafana-plugin/blob/main/LICENSE"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Plugin overview",
+        "path": "img/screenshot-overview.png"
+      }
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
