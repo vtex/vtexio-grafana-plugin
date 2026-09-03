@@ -17,7 +17,7 @@ function buildProps(overrides?: {
       uid: 'test-uid',
       orgId: 1,
       name: 'VTEX IO',
-      type: 'vtexio-grafana-datasource',
+      type: 'vtex-grafana-datasource',
       typeName: 'VTEX IO',
       typeLogoUrl: '',
       access: 'proxy',

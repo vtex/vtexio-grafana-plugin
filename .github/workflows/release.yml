@@ -67,7 +67,7 @@ jobs:
 
           docker run -d --name grafana-signature-check \
             -p 3001:3000 \
-            -v "$PWD/$plugin_dir:/var/lib/grafana/plugins/vtexio-grafana-datasource" \
+            -v "$PWD/$plugin_dir:/var/lib/grafana/plugins/vtex-grafana-datasource" \
             grafana/grafana-enterprise:11.5.3
 
           for i in $(seq 1 30); do
@@ -85,7 +85,7 @@ jobs:
             echo "FAIL: plugin loaded only because signature verification was bypassed"
             exit 1
           fi
-          if ! echo "$logs" | grep -q 'pluginId=vtexio-grafana-datasource'; then
+          if ! echo "$logs" | grep -q 'pluginId=vtex-grafana-datasource'; then
             echo "FAIL: plugin never registered with Grafana"
             exit 1
           fi
