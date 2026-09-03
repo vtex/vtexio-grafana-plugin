@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -290,4 +291,197 @@ func TestFetchLogsFields(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestResourceEndpoint(t *testing.T) {
+	c := newTestClient("http://example.invalid")
+
+	cases := []struct {
+		scenario string
+		path     string
+		want     string
+	}{
+		{"the local apps route", "local/apps", "http://example.invalid/acmestore/apps"},
+		{"the remote apps route", "remote/apps", "http://example.invalid/acmestore/apps"},
+		{"the local logs fields route", "local/logs/fields", "http://example.invalid/logs/acmestore/fields"},
+		{"the remote logs fields route", "remote/logs/fields", "http://example.invalid/logs/acmestore/fields"},
+		{"the local logs query route", "local/logs/query", "http://example.invalid/logs/acmestore/query"},
+		{"the remote logs query route", "remote/logs/query", "http://example.invalid/logs/acmestore/query"},
+		{"the local metrics fields route", "local/metrics/fields", "http://example.invalid/metrics/acmestore/fields"},
+		{"the remote metrics fields route", "remote/metrics/fields", "http://example.invalid/metrics/acmestore/fields"},
+		{"the local metrics query route", "local/metrics/query", "http://example.invalid/metrics/acmestore/query"},
+		{"the remote metrics query route", "remote/metrics/query", "http://example.invalid/metrics/acmestore/query"},
+	}
+
+	for _, tc := range cases {
+		t.Run("given "+tc.scenario, func(t *testing.T) {
+			t.Run("when resourceEndpoint is called", func(t *testing.T) {
+				got, ok := c.resourceEndpoint(tc.path)
+
+				t.Run("it should report the route as known", func(t *testing.T) {
+					if !ok {
+						t.Fatalf("resourceEndpoint(%q) ok = false, want true", tc.path)
+					}
+				})
+				t.Run("it should resolve to the matching read-api endpoint", func(t *testing.T) {
+					if got != tc.want {
+						t.Errorf("resourceEndpoint(%q) = %q, want %q", tc.path, got, tc.want)
+					}
+				})
+			})
+		})
+	}
+
+	t.Run("given a path that matches no known route", func(t *testing.T) {
+		t.Run("when resourceEndpoint is called", func(t *testing.T) {
+			_, ok := c.resourceEndpoint("local/metrics/names")
+
+			t.Run("it should report the route as unknown", func(t *testing.T) {
+				if ok {
+					t.Error("ok = true, want false for an unrecognized path")
+				}
+			})
+		})
+	})
+}
+
+func TestProxy(t *testing.T) {
+	t.Run("given read-api returns a successful GET response", func(t *testing.T) {
+		var gotMethod, gotPath, gotAppKey, gotAppToken string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotMethod, gotPath = r.Method, r.URL.Path
+			gotAppKey = r.Header.Get(headerAppKey)
+			gotAppToken = r.Header.Get(headerAppToken)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"apps":["a","b"]}`))
+		}))
+		defer srv.Close()
+		c := newTestClient(srv.URL)
+
+		t.Run("when Proxy is called with GET and no body", func(t *testing.T) {
+			status, body, err := c.Proxy(context.Background(), http.MethodGet, srv.URL+"/acmestore/apps", nil)
+
+			t.Run("it should not return an error", func(t *testing.T) {
+				if err != nil {
+					t.Fatalf("Proxy returned an error: %v", err)
+				}
+			})
+			t.Run("it should forward the method and path unchanged", func(t *testing.T) {
+				if gotMethod != http.MethodGet {
+					t.Errorf("method = %q, want GET", gotMethod)
+				}
+				if want := "/acmestore/apps"; gotPath != want {
+					t.Errorf("path = %q, want %q", gotPath, want)
+				}
+			})
+			t.Run("it should authenticate with the App Key and App Token headers", func(t *testing.T) {
+				if gotAppKey != "test-app-key" {
+					t.Errorf("%s header = %q, want %q", headerAppKey, gotAppKey, "test-app-key")
+				}
+				if gotAppToken != "test-app-token" {
+					t.Errorf("%s header = %q, want %q", headerAppToken, gotAppToken, "test-app-token")
+				}
+			})
+			t.Run("it should relay the status code as-is", func(t *testing.T) {
+				if status != http.StatusOK {
+					t.Errorf("status = %d, want %d", status, http.StatusOK)
+				}
+			})
+			t.Run("it should relay the response body as-is", func(t *testing.T) {
+				if string(body) != `{"apps":["a","b"]}` {
+					t.Errorf("body = %q, want the raw upstream body", body)
+				}
+			})
+		})
+	})
+
+	t.Run("given a POST request with a body", func(t *testing.T) {
+		var gotMethod string
+		var gotBody []byte
+		var gotContentType string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotMethod = r.Method
+			gotContentType = r.Header.Get("Content-Type")
+			gotBody, _ = io.ReadAll(r.Body)
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{}`))
+		}))
+		defer srv.Close()
+		c := newTestClient(srv.URL)
+
+		t.Run("when Proxy is called with the frontend's already-built request body", func(t *testing.T) {
+			payload := []byte(`{"page":1,"pageSize":100,"filters":[]}`)
+			_, _, err := c.Proxy(context.Background(), http.MethodPost, srv.URL+"/metrics/acmestore/query", payload)
+
+			t.Run("it should not return an error", func(t *testing.T) {
+				if err != nil {
+					t.Fatalf("Proxy returned an error: %v", err)
+				}
+			})
+			t.Run("it should forward the method", func(t *testing.T) {
+				if gotMethod != http.MethodPost {
+					t.Errorf("method = %q, want POST", gotMethod)
+				}
+			})
+			t.Run("it should forward the body unchanged, without re-encoding it", func(t *testing.T) {
+				if string(gotBody) != string(payload) {
+					t.Errorf("body = %q, want %q", gotBody, payload)
+				}
+			})
+			t.Run("it should set a JSON content type", func(t *testing.T) {
+				if gotContentType != "application/json" {
+					t.Errorf("Content-Type = %q, want application/json", gotContentType)
+				}
+			})
+		})
+	})
+
+	t.Run("given read-api returns an error status", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"invalid credentials"}`))
+		}))
+		defer srv.Close()
+		c := newTestClient(srv.URL)
+
+		t.Run("when Proxy is called", func(t *testing.T) {
+			status, body, err := c.Proxy(context.Background(), http.MethodGet, srv.URL+"/acmestore/apps", nil)
+
+			t.Run("it should not treat the status as a Go error", func(t *testing.T) {
+				if err != nil {
+					t.Fatalf("Proxy returned an error: %v, want it to relay the status instead", err)
+				}
+			})
+			t.Run("it should relay the exact upstream status code", func(t *testing.T) {
+				if status != http.StatusUnauthorized {
+					t.Errorf("status = %d, want %d", status, http.StatusUnauthorized)
+				}
+			})
+			t.Run("it should relay the exact upstream body, not a canned message", func(t *testing.T) {
+				if string(body) != `{"error":"invalid credentials"}` {
+					t.Errorf("body = %q, want the raw upstream error body", body)
+				}
+			})
+		})
+	})
+
+	t.Run("given read-api is unreachable", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		unreachableURL := srv.URL
+		srv.Close()
+		c := newTestClient(unreachableURL)
+
+		t.Run("when Proxy is called", func(t *testing.T) {
+			_, _, err := c.Proxy(context.Background(), http.MethodGet, unreachableURL+"/acmestore/apps", nil)
+
+			t.Run("it should return a reachability error", func(t *testing.T) {
+				if err == nil {
+					t.Fatal("expected a network error, got nil")
+				}
+				if !strings.Contains(err.Error(), "reaching the VTEX Observability API") {
+					t.Errorf("error = %q, want it to mention reaching the API", err.Error())
+				}
+			})
+		})
+	})
 }

@@ -313,13 +313,11 @@
         "group_by": {
           "columns": [
             "TimestampTime",
-            "account",
             "handler"
           ]
         },
         "columns": [
           "TimestampTime",
-          "account",
           "ifNull(Attributes['handler'], 'unknown') as handler",
           "anyMerge(ExplicitBounds) AS ExplicitBounds",
           "sumForEachMerge(BucketCounts) AS BucketCounts"
@@ -379,13 +377,11 @@
         "group_by": {
           "columns": [
             "TimestampTime",
-            "account",
             "handler"
           ]
         },
         "columns": [
           "TimestampTime",
-          "account",
           "ifNull(Attributes['handler'], 'unknown') as handler",
           "anyMerge(ExplicitBounds) AS ExplicitBounds",
           "sumForEachMerge(BucketCounts) AS BucketCounts"
@@ -445,13 +441,11 @@
         "group_by": {
           "columns": [
             "TimestampTime",
-            "account",
             "handler"
           ]
         },
         "columns": [
           "TimestampTime",
-          "account",
           "ifNull(Attributes['handler'], 'unknown') as handler",
           "anyMerge(ExplicitBounds) AS ExplicitBounds",
           "sumForEachMerge(BucketCounts) AS BucketCounts"
