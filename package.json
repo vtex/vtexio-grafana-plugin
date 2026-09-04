@@ -4,7 +4,7 @@
   "scripts": {
     "build": "npm run build:backend && npm run build:frontend --",
     "build:ci": "npm run build && apt-get install -y zip && npm run package",
-    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtexio-grafana-datasource && cp -r dist/* vtexio-grafana-plugin-build/vtexio-grafana-datasource/ && cd vtexio-grafana-plugin-build && zip -r vtexio-grafana-datasource-$npm_package_version.zip vtexio-grafana-datasource && rm -rf vtexio-grafana-datasource",
+    "package": "rm -rf vtexio-grafana-plugin-build && mkdir -p vtexio-grafana-plugin-build/vtex-grafana-datasource && cp -r dist/* vtexio-grafana-plugin-build/vtex-grafana-datasource/ && cd vtexio-grafana-plugin-build && zip -r vtex-grafana-datasource-$npm_package_version.zip vtex-grafana-datasource && rm -rf vtex-grafana-datasource",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",

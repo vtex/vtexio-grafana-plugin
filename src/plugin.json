@@ -2,14 +2,14 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "VTEX IO",
-  "id": "vtexio-grafana-datasource",
+  "id": "vtex-grafana-datasource",
   "metrics": true,
   "logs": true,
   "multiValueFilterOperators": true,
   "state": "beta",
   "backend": true,
   "alerting": true,
-  "executable": "gpx_vtexio_grafana_datasource",
+  "executable": "gpx_vtex_grafana_datasource",
   "info": {
     "description": "VTEX IO Data Source for Grafana",
     "author": {
