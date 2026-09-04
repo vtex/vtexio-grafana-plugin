@@ -26,8 +26,8 @@ npm run dev
 npm run build
 
 # Spin up Grafana (Docker) with the plugin mounted from ./dist
-npm run server                    # uses default GRAFANA_VERSION=11.5.3
-GRAFANA_VERSION=11.3.0 npm run server
+npm run server                    # GRAFANA_VERSION from the tracked root .env (default 12.0.1, matches grafana-beta)
+GRAFANA_VERSION=11.3.0 npm run server   # override for a one-off run
 
 # Backend (Go) — build the binaries Grafana loads from dist/
 go run github.com/magefile/mage@latest -v buildAll
