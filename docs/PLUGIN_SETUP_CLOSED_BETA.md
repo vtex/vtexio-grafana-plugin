@@ -5,7 +5,7 @@
 | Created | Jan 23, 2026 |
 | Status | Closed Beta |
 | Updated | Sep 3, 2026 |
-| Current Version | 0.3.1-beta.0 |
+| Current Version | 0.3.2-beta.0 |
 | Maintainer | VTEX Apps Team |
 
 ## Context
@@ -17,17 +17,17 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
 - **Plugin Name:** VTEX IO
 - **Plugin ID:** `vtex-grafana-datasource`
 - **Type:** Datasource
-- **Version:** `0.3.1-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
+- **Version:** `0.3.2-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
 - **Grafana compatibility:** `>=10.4.0`
 - **Download Link:** see the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (zip filename is `vtex-grafana-datasource-<version>.zip`)
 
-> **Plugin ID change:** `vtexio-grafana-datasource` was renamed to `vtex-grafana-datasource` (Grafana Cloud org `vtex`). The published `0.3.1-beta.0` zip is still [`vtexio-grafana-datasource-0.3.1-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.1-beta.0/vtexio-grafana-datasource-0.3.1-beta.0.zip) and extracts to the old folder name. After installing a zip built with the new ID, remove the old `vtexio-grafana-datasource` plugin directory, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and re-add the data source — Grafana will not migrate existing datasources.
+> **Plugin ID change:** `vtexio-grafana-datasource` was renamed to `vtex-grafana-datasource` (Grafana Cloud org `vtex`). The published `0.3.2-beta.0` zip is still [`vtexio-grafana-datasource-0.3.2-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.2-beta.0/vtexio-grafana-datasource-0.3.2-beta.0.zip) and extracts to the old folder name. After installing a zip built with the new ID, remove the old `vtexio-grafana-datasource` plugin directory, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and re-add the data source — Grafana will not migrate existing datasources.
 
 ## Manual Installation Guide
 
 ### Step 1: Download and Extract
 
-1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtex-grafana-datasource-0.3.1-beta.0.zip` on versions built after the ID rename).
+1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtex-grafana-datasource-0.3.2-beta.0.zip` on versions built after the ID rename).
 2. Locate your Grafana plugins directory based on your OS:
    - **Linux:** `/var/lib/grafana/plugins`
    - **macOS (Intel):** `/usr/local/var/lib/grafana/plugins`
