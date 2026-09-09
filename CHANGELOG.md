@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to the VTEX IO Grafana Datasource (`vtex-grafana-datasource`) are documented in this file.
+All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasource`) are documented in this file.
 
 ## Unreleased
 
 ### Changed
 
-- Plugin ID renamed from `vtexio-grafana-datasource` to `vtex-grafana-datasource` (Grafana Cloud org slug `vtex`). Backend executable is now `gpx_vtex_grafana_datasource`. Existing closed-beta installs must remove the old plugin folder and re-add the data source; Grafana does not migrate the ID automatically.
+- Plugin ID reverted from `vtex-grafana-datasource` to `vtexio-grafana-datasource` to match the Grafana Cloud org slug `vtexio`. Backend executable is `gpx_vtexio_grafana_datasource`. The published `0.3.2-beta.0` zip still uses `vtex-grafana-datasource`; after this lands, uninstall that plugin folder, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and recreate datasources. Grafana does not migrate the ID automatically.
 
 ### Fixed
 

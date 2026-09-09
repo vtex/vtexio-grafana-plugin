@@ -3,7 +3,7 @@ apiVersion: 1
 datasources:
   - uid: 'vtexio-datasource'
     name: 'VTEX IO'
-    type: 'vtex-grafana-datasource'
+    type: 'vtexio-grafana-datasource'
     access: proxy
     isDefault: false
     orgId: 1
