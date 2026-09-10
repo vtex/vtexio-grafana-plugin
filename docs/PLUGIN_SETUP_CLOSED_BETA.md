@@ -4,7 +4,7 @@
 | --- | --- |
 | Created | Jan 23, 2026 |
 | Status | Closed Beta |
-| Updated | Sep 3, 2026 |
+| Updated | Sep 9, 2026 |
 | Current Version | 0.3.2-beta.0 |
 | Maintainer | VTEX Apps Team |
 
@@ -15,19 +15,19 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
 ## Overview
 
 - **Plugin Name:** VTEX IO
-- **Plugin ID:** `vtex-grafana-datasource`
+- **Plugin ID:** `vtexio-grafana-datasource`
 - **Type:** Datasource
 - **Version:** `0.3.2-beta.0` (latest closed beta release — check the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) for newer versions)
 - **Grafana compatibility:** `>=10.4.0`
-- **Download Link:** see the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (zip filename is `vtex-grafana-datasource-<version>.zip`)
+- **Download Link:** see the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (zip filename is `vtexio-grafana-datasource-<version>.zip`)
 
-> **Plugin ID change:** `vtexio-grafana-datasource` was renamed to `vtex-grafana-datasource` (Grafana Cloud org `vtex`). The published `0.3.2-beta.0` zip is still [`vtexio-grafana-datasource-0.3.2-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.2-beta.0/vtexio-grafana-datasource-0.3.2-beta.0.zip) and extracts to the old folder name. After installing a zip built with the new ID, remove the old `vtexio-grafana-datasource` plugin directory, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and re-add the data source — Grafana will not migrate existing datasources.
+> **Plugin ID change:** Grafana Cloud org slug is `vtexio`, so the plugin ID is `vtexio-grafana-datasource`. The published [`vtex-grafana-datasource-0.3.2-beta.0.zip`](https://github.com/vtex/vtexio-grafana-plugin/releases/download/v0.3.2-beta.0/vtex-grafana-datasource-0.3.2-beta.0.zip) still uses ID `vtex-grafana-datasource`. After installing a zip built with `vtexio-grafana-datasource`, remove the `vtex-grafana-datasource` plugin directory, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and re-add the data source — Grafana will not migrate existing datasources.
 
 ## Manual Installation Guide
 
 ### Step 1: Download and Extract
 
-1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtex-grafana-datasource-0.3.2-beta.0.zip` on versions built after the ID rename).
+1. Download the plugin zip file from the [Releases page](https://github.com/vtex/vtexio-grafana-plugin/releases) (e.g. `vtexio-grafana-datasource-<version>.zip` on versions built after the ID revert; `0.3.2-beta.0` is still `vtex-grafana-datasource-0.3.2-beta.0.zip`).
 2. Locate your Grafana plugins directory based on your OS:
    - **Linux:** `/var/lib/grafana/plugins`
    - **macOS (Intel):** `/usr/local/var/lib/grafana/plugins`
@@ -36,7 +36,7 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
    - **Docker:** `/var/lib/grafana/plugins`
 3. Extract the zip file into this directory.
 
-> **Verification:** The zip extracts to `vtex-grafana-datasource/`. A `plugin.json` file must exist at the root of this folder.
+> **Verification:** The zip extracts to `vtexio-grafana-datasource/`. A `plugin.json` file must exist at the root of this folder.
 
 ### Step 2: Allow Unsigned Plugins
 
@@ -48,10 +48,10 @@ If your Grafana root URL matches one of the signed URLs listed above (`grafana.c
 
 ```ini
 [plugins]
-allow_loading_unsigned_plugins = vtex-grafana-datasource
+allow_loading_unsigned_plugins = vtexio-grafana-datasource
 ```
 
-For Docker: Add the environment variable `-e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtex-grafana-datasource"` to your command or `docker-compose.yml`.
+For Docker: Add the environment variable `-e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource"` to your command or `docker-compose.yml`.
 
 ### Step 3: Restart Grafana
 
@@ -72,7 +72,7 @@ For Docker environments, installation is managed via volume mounting and environ
 
 ### Step 1: Extract Plugin Locally
 
-Unzip the plugin on your host machine. The archive extracts to `vtex-grafana-datasource/`. Ensure the structure is `vtex-grafana-datasource/plugin.json`.
+Unzip the plugin on your host machine. The archive extracts to `vtexio-grafana-datasource/`. Ensure the structure is `vtexio-grafana-datasource/plugin.json`.
 
 ### Step 2: Run/Compose Example
 
@@ -82,8 +82,8 @@ Unzip the plugin on your host machine. The archive extracts to `vtex-grafana-dat
 docker run -d \
   --name grafana \
   -p 3000:3000 \
-  -v $(pwd)/vtex-grafana-datasource:/var/lib/grafana/plugins/vtex-grafana-datasource \
-  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtex-grafana-datasource \
+  -v $(pwd)/vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource \
+  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource \
   grafana/grafana:latest
 ```
 
@@ -98,9 +98,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./vtex-grafana-datasource:/var/lib/grafana/plugins/vtex-grafana-datasource
+      - ./vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource
     environment:
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtex-grafana-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource
 ```
 
 ## Configuration & Credentials
