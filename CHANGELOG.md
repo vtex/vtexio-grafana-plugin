@@ -11,6 +11,7 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 ### Fixed
 
 - Pin `google.golang.org/grpc` to `v1.83.1` (CVE-2026-84304) and `browserslist` to `4.28.9` (CVE-2026-73088, CVE-2026-73089) so the Grafana plugin-validator OSV scan stays clean.
+- Pin `google.golang.org/grpc` to `v1.83.2` (CVE-2026-84445 / GO-2026-6443) and `js-yaml` to `3.15.2` / `4.3.2` (CVE-2026-84375) so the catalog OSV scan stays clean.
 
 ## 0.3.0-beta.0 (2026-08-14)
 
