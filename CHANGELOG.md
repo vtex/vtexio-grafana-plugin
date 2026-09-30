@@ -7,6 +7,7 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 ### Changed
 
 - Plugin ID reverted from `vtex-grafana-datasource` to `vtexio-grafana-datasource` to match the Grafana Cloud org slug `vtexio`. Backend executable is `gpx_vtexio_grafana_datasource`. The published `0.3.2-beta.0` zip still uses `vtex-grafana-datasource`; after this lands, uninstall that plugin folder, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and recreate datasources. Grafana does not migrate the ID automatically.
+- Upgrade `github.com/grafana/grafana-plugin-sdk-go` from `v0.294.0` to `v0.296.5` (and its transitive deps) so the plugin-validator no longer flags `go-sdk-older-than-2-months`.
 
 ### Fixed
 
