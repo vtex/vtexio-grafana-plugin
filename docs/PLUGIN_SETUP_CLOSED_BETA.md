@@ -10,7 +10,9 @@
 
 ## Context
 
-The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distributed manually via a zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Releases are signed with a private signature scoped to VTEX's official Grafana root URLs (`https://grafana.com`, `https://vtexioapps.grafana.net`, `https://grafana-beta.vtex.com`, and `http://localhost:3000`). If your Grafana instance's configured root URL is not one of these, the signature will not validate and specific installation steps are required for Grafana to load the plugin anyway.
+The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distributed manually via a zip file attached to each [GitHub Release](https://github.com/vtex/vtexio-grafana-plugin/releases). Releases are signed with a Grafana **community** signature, which is valid on any Grafana instance regardless of its configured root URL, so no unsigned-plugin allowlisting is needed.
+
+> **Older releases (`0.3.2-beta.2` and earlier)** were signed with a *private* signature scoped to `https://grafana.com`, `https://vtexioapps.grafana.net`, `https://grafana-beta.vtex.com`, and `http://localhost:3000`. On any other root URL Grafana treats those zips as unsigned; follow [Step 2](#step-2-allow-unsigned-plugins-older-releases-only) if you are installing one of them.
 
 ## Overview
 
@@ -38,9 +40,9 @@ The VTEX IO Grafana Datasource plugin is currently in Closed Beta and distribute
 
 > **Verification:** The zip extracts to `vtexio-grafana-datasource/`. A `plugin.json` file must exist at the root of this folder.
 
-### Step 2: Allow Unsigned Plugins
+### Step 2: Allow Unsigned Plugins (older releases only)
 
-If your Grafana root URL matches one of the signed URLs listed above (`grafana.com`, `vtexioapps.grafana.net`, `grafana-beta.vtex.com`, or `localhost:3000`), the plugin's signature validates automatically and you can skip this step. For any other root URL, Grafana treats it as unsigned and blocks it by default; you must authorize it in your configuration:
+Skip this step for community-signed releases (newer than `0.3.2-beta.2`): the signature validates on any root URL. It is only required for the older private-signed zips when your Grafana root URL is not one of `grafana.com`, `vtexioapps.grafana.net`, `grafana-beta.vtex.com`, or `localhost:3000`, or for locally built (unsigned) plugins. In those cases Grafana blocks the plugin by default; authorize it in your configuration:
 
 1. Open your `grafana.ini` (or `custom.ini` for Windows).
 2. Find the `[plugins]` section.
@@ -83,7 +85,6 @@ docker run -d \
   --name grafana \
   -p 3000:3000 \
   -v $(pwd)/vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource \
-  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource \
   grafana/grafana:latest
 ```
 
@@ -99,9 +100,9 @@ services:
       - "3000:3000"
     volumes:
       - ./vtexio-grafana-datasource:/var/lib/grafana/plugins/vtexio-grafana-datasource
-    environment:
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource
 ```
+
+> Installing an older private-signed zip (`0.3.2-beta.2` or earlier) or an unsigned local build? Add `-e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=vtexio-grafana-datasource` (or the equivalent `environment:` entry) — see Step 2 above.
 
 ## Configuration & Credentials
 
@@ -126,7 +127,8 @@ services:
 | Issue | Potential Cause | Solution |
 | --- | --- | --- |
 | Plugin not in list | Wrong directory structure | Ensure `plugin.json` is exactly one level below `plugins/` (avoid "double-nesting"). |
-| "Signature Verification Failed" | Step 2 was skipped | Double-check that `allow_loading_unsigned_plugins` matches the ID exactly. |
+| "Signature Verification Failed" | Older private-signed zip (≤ `0.3.2-beta.2`) or unsigned local build on a non-allowlisted root URL | Upgrade to a community-signed release, or apply Step 2 and double-check that `allow_loading_unsigned_plugins` matches the ID exactly. |
+| "Modified signature" | Files inside the plugin folder were changed after signing | Re-extract the zip as-is; do not edit or add files under `vtexio-grafana-datasource/`. |
 | Permissions Error (Linux/Mac) | Folder ownership | Ensure the `grafana` user has read access: `sudo chown -R grafana:grafana [path]`. |
 | Changes not applied | Service didn't restart | Check logs (e.g., `journalctl` or `docker logs`) to verify the config reloaded. |
 

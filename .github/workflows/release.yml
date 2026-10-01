@@ -35,9 +35,29 @@ jobs:
         run: npm run build
 
       - name: Sign plugin
+        # Public (community/commercial) signature: no --rootUrls. Grafana picks the
+        # level it granted to the `vtexio` org during catalog review. If this step
+        # fails with "Field is required: rootUrls", the level has not been granted
+        # yet — do not fall back to `npm run sign:private`; a private MANIFEST
+        # trips the catalog validator ("plugin must be signed under community or
+        # commercial signature level").
+        # https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin
         run: npm run sign
         env:
           GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
+
+      - name: Check signature level
+        run: |
+          set -euo pipefail
+          level=$(grep -m1 '"signatureType"' dist/MANIFEST.txt | sed -E 's/.*"signatureType": *"([^"]+)".*/\1/')
+          echo "MANIFEST.txt signatureType=$level"
+          case "$level" in
+            community|commercial) ;;
+            *)
+              echo "FAIL: expected a community or commercial signature, got '$level'"
+              exit 1
+              ;;
+          esac
 
       - name: Package plugin
         run: npm run package
@@ -51,6 +71,20 @@ jobs:
           fi
           echo "path=$file" >> $GITHUB_OUTPUT
           echo "name=$(basename "$file")" >> $GITHUB_OUTPUT
+
+      - name: Validate plugin package
+        # Same validator the Grafana catalog runs on submission. The full analyzer
+        # set (not only metadatavalid) is what reports the signature-level warning,
+        # so fail the release if it shows up again.
+        run: |
+          set -euo pipefail
+          docker run --pull=always --rm \
+            -v "$PWD/${{ steps.artifact.outputs.path }}:/archive.zip" \
+            grafana/plugin-validator-cli /archive.zip 2>&1 | tee validator.log
+          if grep -q "signed under community or commercial signature level" validator.log; then
+            echo "FAIL: catalog validator still reports a private signature"
+            exit 1
+          fi
 
       - name: Verify Plugin Signature
         run: |

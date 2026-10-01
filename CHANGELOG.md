@@ -7,6 +7,7 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 ### Changed
 
 - Plugin ID reverted from `vtex-grafana-datasource` to `vtexio-grafana-datasource` to match the Grafana Cloud org slug `vtexio`. Backend executable is `gpx_vtexio_grafana_datasource`. The published `0.3.2-beta.0` zip still uses `vtex-grafana-datasource`; after this lands, uninstall that plugin folder, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and recreate datasources. Grafana does not migrate the ID automatically.
+- Releases are now signed with a public (community/commercial) Grafana signature instead of a private one scoped to VTEX root URLs, as required by the plugin catalog validator (`MANIFEST.txt: plugin must be signed under community or commercial signature level`). `npm run sign` no longer passes `--rootUrls`; the previous behaviour is available as `npm run sign:private` for internal builds only. The release workflow fails if `MANIFEST.txt` is not community/commercial and runs the full `grafana/plugin-validator-cli` on the zip. Community-signed zips load on any Grafana root URL without `allow_loading_unsigned_plugins`.
 
 ### Fixed
 
