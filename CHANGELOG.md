@@ -7,11 +7,13 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 ### Changed
 
 - Plugin ID reverted from `vtex-grafana-datasource` to `vtexio-grafana-datasource` to match the Grafana Cloud org slug `vtexio`. Backend executable is `gpx_vtexio_grafana_datasource`. The published `0.3.2-beta.0` zip still uses `vtex-grafana-datasource`; after this lands, uninstall that plugin folder, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and recreate datasources. Grafana does not migrate the ID automatically.
+- Upgrade `github.com/grafana/grafana-plugin-sdk-go` from `v0.294.0` to `v0.296.5` (and its transitive deps) so the plugin-validator no longer flags `go-sdk-older-than-2-months`.
 
 ### Fixed
 
 - Pin `google.golang.org/grpc` to `v1.83.1` (CVE-2026-84304) and `browserslist` to `4.28.9` (CVE-2026-73088, CVE-2026-73089) so the Grafana plugin-validator OSV scan stays clean.
 - Pin `google.golang.org/grpc` to `v1.83.2` (CVE-2026-84445 / GO-2026-6443) and `js-yaml` to `3.15.2` / `4.3.2` (CVE-2026-84375) so the catalog OSV scan stays clean.
+- Pin `brace-expansion` to `1.1.21` / `2.1.7` (CVE-2026-102276, CVE-2026-102278) and `fast-uri` to `3.1.8` (CVE-2026-84394, CVE-2026-84292) so the catalog OSV scan stays clean.
 
 ## 0.3.0-beta.0 (2026-08-14)
 
