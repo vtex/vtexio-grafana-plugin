@@ -485,3 +485,93 @@ func TestProxy(t *testing.T) {
 		})
 	})
 }
+
+func TestClientIdentificationHeaders(t *testing.T) {
+	t.Cleanup(func() { clientVersion = defaultClientVersion })
+
+	type seen struct{ ua, client, appKey, appToken, fromAlert string }
+	capture := func(got *seen) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			*got = seen{
+				ua:        r.Header.Get("User-Agent"),
+				client:    r.Header.Get(headerClient),
+				appKey:    r.Header.Get(headerAppKey),
+				appToken:  r.Header.Get(headerAppToken),
+				fromAlert: r.Header.Get(headerFromAlert),
+			}
+			_, _ = w.Write([]byte(`{}`))
+		}))
+	}
+
+	t.Run("given no version was injected at build time", func(t *testing.T) {
+		clientVersion = defaultClientVersion
+		var got seen
+		srv := capture(&got)
+		defer srv.Close()
+		c := newTestClient(srv.URL)
+
+		t.Run("when a query is sent", func(t *testing.T) {
+			_, _ = c.QueryLogs(context.Background(), O11yQueryRequest{}, true)
+
+			t.Run("it should send the dev User-Agent", func(t *testing.T) {
+				if want := "vtexio-grafana-datasource/dev"; got.ua != want {
+					t.Errorf("User-Agent = %q, want %q", got.ua, want)
+				}
+			})
+			t.Run("it should send X-VTEX-Client", func(t *testing.T) {
+				if got.client != "vtexio-grafana-datasource" {
+					t.Errorf("X-VTEX-Client = %q", got.client)
+				}
+			})
+			t.Run("it should keep auth and alert headers untouched", func(t *testing.T) {
+				if got.appKey != "test-app-key" || got.appToken != "test-app-token" || got.fromAlert != "true" {
+					t.Errorf("auth/alert headers changed: %+v", got)
+				}
+			})
+		})
+	})
+
+	t.Run("given a version was injected", func(t *testing.T) {
+		SetClientVersion("1.2.3-beta.4")
+		var got seen
+		srv := capture(&got)
+		defer srv.Close()
+		c := newTestClient(srv.URL)
+
+		for name, call := range map[string]func(){
+			"QueryMetrics":    func() { _, _ = c.QueryMetrics(context.Background(), O11yQueryRequest{}, false) },
+			"FetchLogsFields": func() { _ = c.FetchLogsFields(context.Background()) },
+			"Proxy":           func() { _, _, _ = c.Proxy(context.Background(), http.MethodGet, srv.URL+"/acmestore/apps", nil) },
+		} {
+			t.Run("when "+name+" is called", func(t *testing.T) {
+				got = seen{}
+				call()
+
+				t.Run("it should send the versioned User-Agent and X-VTEX-Client", func(t *testing.T) {
+					if want := "vtexio-grafana-datasource/1.2.3-beta.4"; got.ua != want {
+						t.Errorf("User-Agent = %q, want %q", got.ua, want)
+					}
+					if got.client != "vtexio-grafana-datasource" {
+						t.Errorf("X-VTEX-Client = %q", got.client)
+					}
+				})
+				t.Run("it should not mark non-alert traffic as alert", func(t *testing.T) {
+					if got.fromAlert != "" {
+						t.Errorf("X-Grafana-From-Alert = %q, want empty", got.fromAlert)
+					}
+				})
+			})
+		}
+	})
+
+	t.Run("given SetClientVersion receives a blank value", func(t *testing.T) {
+		clientVersion = defaultClientVersion
+		SetClientVersion("  ")
+
+		t.Run("it should keep the dev fallback", func(t *testing.T) {
+			if got := userAgent(); got != "vtexio-grafana-datasource/dev" {
+				t.Errorf("userAgent() = %q", got)
+			}
+		})
+	})
+}

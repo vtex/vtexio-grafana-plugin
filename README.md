@@ -36,19 +36,27 @@ The VTEX IO Grafana datasource provides predefined metric types for easy observa
 1. **Select Query Type**: Choose "Metrics" from the query type dropdown
 2. **Select App Name**: Choose the VTEX IO app you want to monitor
 3. **Select Metric Type**: Choose from the predefined metrics:
-   - **Request Rate per Account**: Shows the total number of requests over time, grouped by account
-   - **Request Rate per Status per Account**: Shows request count broken down by HTTP status code and account
-   - **Latency Stats per Account and Handler**: Shows latency percentiles (p50, p95, p99 in ms) per account and handler in a **table**
+   - **Request Rate per Account**: Total number of requests over time, grouped by account
+   - **Error Rate per Handler**: Error rate over time, grouped by app and handler
+   - **Latency Stats per Account and Handler**: Latency percentiles (p50, p95, p99 in ms) per account and handler in a **table**
+   - **Latency Stats per Account**: Latency percentiles per account
+   - **2xx Latency P50 per Handler**: Median latency of successful (2xx) requests per handler
+   - **2xx Latency P90 per Handler**: P90 latency of successful (2xx) requests per handler
+   - **2xx Latency P99 per Handler**: P99 latency of successful (2xx) requests per handler
 
 #### Supported Metrics
 
-All metrics use the `runtime_http_requests_total` metric from the VTEX Observability Platform:
+Request and error rates use `runtime_http_requests_total`; every latency metric uses the `runtime_http_requests_duration_milliseconds` histogram.
 
 | Metric Type | Description | Grouping | Backend Metric |
 |-------------|-------------|----------|----------------|
 | Request Rate per Account | Total requests over time | By account | `runtime_http_requests_total` |
-| Request Rate per Status per Account | Requests by HTTP status | By account + status code | `runtime_http_requests_total` |
-| Latency Stats per Account and Handler | Latency percentiles (p50, p95, p99) per account and handler | By account + handler (table) | `runtime_http_requests_duration_milliseconds` |
+| Error Rate per Handler | Error rate over time | By app + handler | `runtime_http_requests_total` |
+| Latency Stats per Account and Handler | Latency percentiles (p50, p95, p99) | By account + handler (table) | `runtime_http_requests_duration_milliseconds` |
+| Latency Stats per Account | Latency percentiles (p50, p95, p99) | By account | `runtime_http_requests_duration_milliseconds` |
+| 2xx Latency P50 per Handler | Median latency of 2xx requests | By handler | `runtime_http_requests_duration_milliseconds` |
+| 2xx Latency P90 per Handler | P90 latency of 2xx requests | By handler | `runtime_http_requests_duration_milliseconds` |
+| 2xx Latency P99 per Handler | P99 latency of 2xx requests | By handler | `runtime_http_requests_duration_milliseconds` |
 
 **Latency Stats — table visualization:** Results for "Latency Stats per Account and Handler" are intended to be viewed as a **Table** (columns: account, handler, p50, p95, p99 in ms). The plugin signals this to Grafana via the response metadata. When you add a new panel and run a Latency Stats query, Grafana will often suggest or default to the Table visualization. In **Explore** or when changing an existing panel’s query to Latency Stats, if the view does not switch to Table automatically, choose **Table** from the visualization picker (panel options).
 
@@ -57,6 +65,19 @@ All metrics use the `runtime_http_requests_total` metric from the VTEX Observabi
 1. **Select Query Type**: Choose "Logs" from the query type dropdown
 2. **Select App Name**: Choose the VTEX IO app whose logs you want to view
 3. **Configure Page Size**: Adjust the number of log entries to retrieve (default: 100)
+
+## Client identification
+
+Every request the plugin makes to the VTEX Observability API (dashboard queries, alert-rule evaluations, health checks, and the autocomplete/field calls) carries two static identification headers so VTEX can tell plugin traffic from direct API calls:
+
+| Header | Value |
+|--------|-------|
+| `User-Agent` | `vtexio-grafana-datasource/<plugin version>` (`dev` for local builds without a version) |
+| `X-VTEX-Client` | `vtexio-grafana-datasource` |
+
+Both are fixed values built from the plugin ID and version. **No usage telemetry is collected**: nothing about the user, your Grafana instance, dashboards, or queries is added beyond these two static headers. The existing `X-Grafana-From-Alert` header (alert rule evaluations) and the App Key/App Token authentication headers are unchanged.
+
+Dashboard requests from the browser reach the API through the plugin backend (`CallResource`), which sets these headers itself. The `routes` in `src/plugin.json` declare the same headers for the Grafana reverse proxy, but they are only used by Grafana when a plugin has no backend; if Grafana's data source proxy is ever in the path it may overwrite `User-Agent` with its own `Grafana/x.y.z`, in which case `X-VTEX-Client` is the reliable signal. Route headers cannot interpolate the plugin version, so the route `User-Agent` is `vtexio-grafana-datasource/unknown`.
 
 ## Contributing & Support
 

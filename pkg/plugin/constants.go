@@ -12,6 +12,19 @@ const (
 	// headerFromAlert tells read-api this query backs an alert evaluation, so it can
 	// account for scheduled traffic separately from interactive dashboard use.
 	headerFromAlert = "X-Grafana-From-Alert"
+	// headerClient identifies this plugin to read-api. The value is a fixed constant:
+	// it never carries user, tenant, credential, or customer-Grafana data.
+	headerClient = "X-VTEX-Client"
+	// headerUserAgent is the standard HTTP User-Agent header.
+	headerUserAgent = "User-Agent"
+)
+
+const (
+	// clientID is the plugin ID (plugin.json "id"). It is the X-VTEX-Client value and
+	// the product token of the User-Agent.
+	clientID = "vtexio-grafana-datasource"
+	// defaultClientVersion is used when the binary was built without a version ldflag.
+	defaultClientVersion = "dev"
 )
 
 // productionBaseURLTemplate is the read-api base URL for a tenant when no local

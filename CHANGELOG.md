@@ -4,6 +4,10 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 
 ## Unreleased
 
+### Added
+
+- Client identification: every call to the VTEX Observability API (QueryData, health check and the CallResource proxy) now sends `User-Agent: vtexio-grafana-datasource/<version>` (`dev` when built without a version) and a new static `X-VTEX-Client: vtexio-grafana-datasource` header. The same headers are declared on the `plugin.json` routes. No usage telemetry is collected; the headers are fixed values with no user, tenant or Grafana-instance data. `X-Grafana-From-Alert` and auth headers are unchanged.
+
 ### Changed
 
 - Plugin ID reverted from `vtex-grafana-datasource` to `vtexio-grafana-datasource` to match the Grafana Cloud org slug `vtexio`. Backend executable is `gpx_vtexio_grafana_datasource`. The published `0.3.2-beta.0` zip still uses `vtex-grafana-datasource`; after this lands, uninstall that plugin folder, update `allow_loading_unsigned_plugins` / `GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS`, and recreate datasources. Grafana does not migrate the ID automatically.
@@ -11,6 +15,7 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 
 ### Fixed
 
+- README listed 3 predefined metrics (one of them non-existent); it now lists the 7 types defined in `src/types.ts`.
 - Pin `google.golang.org/grpc` to `v1.83.1` (CVE-2026-84304) and `browserslist` to `4.28.9` (CVE-2026-73088, CVE-2026-73089) so the Grafana plugin-validator OSV scan stays clean.
 - Pin `google.golang.org/grpc` to `v1.83.2` (CVE-2026-84445 / GO-2026-6443) and `js-yaml` to `3.15.2` / `4.3.2` (CVE-2026-84375) so the catalog OSV scan stays clean.
 - Pin `brace-expansion` to `1.1.21` / `2.1.7` (CVE-2026-102276, CVE-2026-102278) and `fast-uri` to `3.1.8` (CVE-2026-84394, CVE-2026-84292) so the catalog OSV scan stays clean.
