@@ -68,16 +68,16 @@ Request and error rates use `runtime_http_requests_total`; every latency metric 
 
 ## Client identification
 
-Every request the plugin makes to the VTEX Observability API (dashboard queries, alert-rule evaluations, health checks, and the autocomplete/field calls) carries two static identification headers so VTEX can tell plugin traffic from direct API calls:
+Every request the plugin makes to the VTEX Observability API carries a static identification header so VTEX can tell plugin traffic from direct API calls. Requests reach the API through two different paths, and the `User-Agent` differs between them:
 
-| Header | Value |
-|--------|-------|
-| `User-Agent` | `vtexio-grafana-datasource/<plugin version>` (`dev` for local builds without a version) |
-| `X-VTEX-Client` | `vtexio-grafana-datasource` |
+| Request path | `X-VTEX-Client` | `User-Agent` |
+|--------------|-----------------|--------------|
+| Plugin backend (Go): alert-rule evaluations (`QueryData`), health checks, and any `CallResource` call | `vtexio-grafana-datasource` | `vtexio-grafana-datasource/<plugin version>` (`dev` for local builds without SDK build metadata) |
+| Grafana data source proxy: dashboard queries and the app/field autocomplete calls made by the browser through `instanceSettings.url` (`src/datasource.ts`, `src/clients/o11yApi.ts`), using the `routes` declared in `src/plugin.json` | `vtexio-grafana-datasource` | `vtexio-grafana-datasource/unknown` — route headers cannot interpolate the plugin version, and Grafana applies route headers after setting its own `Grafana/x.y.z`, so this value is what the API sees; on Grafana versions that do not forward it, the API sees `Grafana/x.y.z` |
 
-Both are fixed values built from the plugin ID and version. **No usage telemetry is collected**: nothing about the user, your Grafana instance, dashboards, or queries is added beyond these two static headers. The existing `X-Grafana-From-Alert` header (alert rule evaluations) and the App Key/App Token authentication headers are unchanged.
+`X-VTEX-Client` is therefore the reliable signal and the one the API relies on; the `User-Agent` only adds the version for backend-originated requests. All values are fixed, built from the plugin ID and version. **No usage telemetry is collected**: nothing about the user, your Grafana instance, dashboards, or queries is added beyond these static headers. The existing `X-Grafana-From-Alert` header (alert rule evaluations) and the App Key/App Token authentication headers are unchanged.
 
-Dashboard requests from the browser reach the API through the plugin backend (`CallResource`), which sets these headers itself. The `routes` in `src/plugin.json` declare the same headers for the Grafana reverse proxy, but they are only used by Grafana when a plugin has no backend; if Grafana's data source proxy is ever in the path it may overwrite `User-Agent` with its own `Grafana/x.y.z`, in which case `X-VTEX-Client` is the reliable signal. Route headers cannot interpolate the plugin version, so the route `User-Agent` is `vtexio-grafana-datasource/unknown`.
+The backend version comes from the Grafana plugin SDK build metadata embedded by `mage` (`build/buildinfo`, read from `package.json`), with `-X main.version=...` as an optional override.
 
 ## Contributing & Support
 

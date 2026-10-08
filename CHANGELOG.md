@@ -6,7 +6,7 @@ All notable changes to the VTEX IO Grafana Datasource (`vtexio-grafana-datasourc
 
 ### Added
 
-- Client identification: every call to the VTEX Observability API (QueryData, health check and the CallResource proxy) now sends `User-Agent: vtexio-grafana-datasource/<version>` (`dev` when built without a version) and a new static `X-VTEX-Client: vtexio-grafana-datasource` header. The same headers are declared on the `plugin.json` routes. No usage telemetry is collected; the headers are fixed values with no user, tenant or Grafana-instance data. `X-Grafana-From-Alert` and auth headers are unchanged.
+- Client identification: every call to the VTEX Observability API now sends a static `X-VTEX-Client: vtexio-grafana-datasource` header. Backend-originated calls (QueryData, health check, CallResource) also send `User-Agent: vtexio-grafana-datasource/<version>`, with the version taken from the SDK build metadata embedded by `mage` (`dev` when built without it); browser-originated calls go through Grafana's data source proxy with the same headers declared on the `plugin.json` routes (`User-Agent: vtexio-grafana-datasource/unknown`). No usage telemetry is collected; the headers are fixed values with no user, tenant or Grafana-instance data. `X-Grafana-From-Alert` and auth headers are unchanged.
 
 ### Changed
 
