@@ -63,10 +63,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -85,10 +81,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -107,10 +99,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -129,10 +117,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -151,10 +135,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -173,10 +153,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -195,10 +171,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -217,10 +189,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -239,10 +207,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -261,10 +225,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -283,10 +243,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     },
@@ -305,10 +261,6 @@
         {
           "name": "X-VTEX-Client",
           "content": "vtexio-grafana-datasource"
-        },
-        {
-          "name": "User-Agent",
-          "content": "vtexio-grafana-datasource/unknown"
         }
       ]
     }
