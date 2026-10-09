@@ -59,6 +59,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -73,6 +77,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -87,6 +95,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -101,6 +113,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -115,6 +131,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -129,6 +149,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -143,6 +167,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -157,6 +185,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -171,6 +203,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -185,6 +221,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -199,6 +239,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     },
@@ -213,6 +257,10 @@
         {
           "name": "X-VTEX-API-AppToken",
           "content": "{{ .SecureJsonData.appToken }}"
+        },
+        {
+          "name": "X-VTEX-Client",
+          "content": "vtexio-grafana-datasource"
         }
       ]
     }

@@ -166,9 +166,30 @@ func (c *O11yApiClient) roundTrip(ctx context.Context, method, endpoint string, 
 	return res.StatusCode, raw, nil
 }
 
-// setHeaders attaches auth and, when this query backs an alert rule, the marker
+// clientVersion is the plugin version reported in the User-Agent. It is set once at
+// startup from the build's version ldflag (see SetClientVersion) and falls back to "dev".
+var clientVersion = defaultClientVersion
+
+// SetClientVersion records the plugin version used in the User-Agent header. Empty
+// or whitespace-only values keep the "dev" fallback. Call it before serving requests.
+func SetClientVersion(v string) {
+	if v = strings.TrimSpace(v); v != "" {
+		clientVersion = v
+	}
+}
+
+// userAgent returns "vtexio-grafana-datasource/<version>".
+func userAgent() string {
+	return clientID + "/" + clientVersion
+}
+
+// setHeaders attaches the static client-identification headers, auth and, when this query backs an alert rule, the marker
 // read-api uses to attribute scheduled traffic.
 func (c *O11yApiClient) setHeaders(req *http.Request, fromAlert bool) {
+	// Identification headers are static: plugin ID + version only. Set before auth so
+	// they can never shadow the credential headers.
+	req.Header.Set(headerUserAgent, userAgent())
+	req.Header.Set(headerClient, clientID)
 	req.Header.Set(headerAppKey, c.appKey)
 	req.Header.Set(headerAppToken, c.appToken)
 	if fromAlert {
